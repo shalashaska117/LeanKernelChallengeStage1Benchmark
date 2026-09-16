@@ -57,3 +57,20 @@ python3 benchmark.py diagnostic --problem permanent \
 ```
 
 All five targets compiled, passed the export axiom audit, and completed one kernel replay each. Their outputs were 1, 1, 2, 6 and 8. The run used the default 8192 MiB watchdog, the existing pinned tools, and a freshly built permanent `Spec` in the managed cache. It checks dimensions 0, 1, 2, 3 and one public dimension-6 instance.
+
+## Rule 110 diagnostics
+
+The Python suite checks the documented one-step example, zero-step initialization, seeds 0 and 0xffffffff, and agreement with a second implementation using integer rotations and a Boolean identity. It also checks the full `Nat` output in generated targets, decoded steps and seed in Markdown, the six default inputs, and the 4096 MiB default through the CLI. All 67 tests pass on WSL; native Windows passes 66 and skips the POSIX process-group test.
+
+The independent cell simulation agrees with the pinned official reference on 51 inputs: all six local public cases and steps 0 through 8 with seeds 0, 1, 0x12345678, 0x80000000 and 0xffffffff. The six defaults also match the pinned evaluator's empty-key sampler. The publication check passes for all 52 files and verifies the eight unchanged official Lean source hashes.
+
+The public CLI completed this wall-time smoke check against the bundled official example:
+
+```bash
+python3 benchmark.py setup --problem ca-rule110
+python3 benchmark.py diagnostic --problem ca-rule110 \
+  --inputs 0 1 2 4294967297 --metric wall-time --repetitions 1 \
+  --output results/rule110-public-smoke
+```
+
+All four targets compiled, passed the export axiom audit, and completed one kernel replay each. Input `4294967297` returned the documented exact 256-bit output. The JSON report records steps and seed for every input, the expected natural-number output, and the default 4096 MiB watchdog. Setup reused the pinned shared tools and built Rule 110's fixed `Spec` in the managed cache.

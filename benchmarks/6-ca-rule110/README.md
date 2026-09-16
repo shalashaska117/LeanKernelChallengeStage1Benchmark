@@ -21,7 +21,7 @@ The theorem must cover every natural-number input, including inputs outside the 
 
 Decode `steps = n >> 32` and `seed = n & 0xffffffff`; pack with `(steps << 32) | seed` for a 32-bit seed. Each simultaneous update reads the left neighbor, current cell, and right neighbor, with indices modulo 256. In neighborhood order 111, 110, 101, 100, 011, 010, 001, 000, the next bits are 0, 1, 1, 0, 1, 1, 1, 0.
 
-The initial cells 0 and 1 are true and false. For `i >= 2`, cell `i` is bit 31 of `caMix32(seed + (i + 1) * 0x9e3779b9)`. The fixed specification defines the 32-bit mixer. The result places cell `i` at bit `i`, with cell zero least significant and no bits above 255. Zero steps returns the seeded initial row.
+The initial cells 0 and 1 are true and false. For `i >= 2`, cell `i` is bit 31 of `caMix32(seed + (i + 1) * 0x9e3779b9)`. The fixed specification defines the 32-bit mixer. Its argument is a natural number: the sum is not truncated before the mixer's first xor and shift. The result places cell `i` at bit `i`, with cell zero least significant and no bits above 255. Zero steps returns the seeded initial row.
 
 Input `4294967297` means one step with seed 1. Its output is `62412942364118713680778432052760708221590981514164502482365323362230212198349`.
 
@@ -41,7 +41,16 @@ The site's description is qualitative. It is not a formal complexity bound or a 
 | C2 | 4 steps; distinct 32-bit seeds | 2 | 60 s |
 | C3 | 8 steps; distinct 32-bit seeds | 2 | 120 s |
 
-The official schedule selects distinct 32-bit seeds within each group. The canonical evaluator derives a deterministic schedule for local unseeded runs. Obtain the exact local packed inputs from the result's performance plan; group scales alone do not identify a case.
+The official schedule selects distinct 32-bit seeds within each group. The canonical evaluator derives a deterministic schedule for local unseeded runs. The diagnostic defaults use its six empty-key inputs, recorded in [cases.json](cases.json):
+
+| Group | Packed input | Steps | Seed |
+| --- | ---: | ---: | ---: |
+| C1 | 12551916119 | 2 | 3961981527 |
+| C1 | 10588838281 | 2 | 1998903689 |
+| C2 | 18550129185 | 4 | 1370260001 |
+| C2 | 18418222002 | 4 | 1238352818 |
+| C3 | 34820276714 | 8 | 460538346 |
+| C3 | 38244662432 | 8 | 3884924064 |
 
 The pinned whole-job memory policy is 4096 MiB and remains provisional in upstream documentation. The local comparison command does not enforce the official container memory limit. See [measurement and limits](../../docs/methodology.md).
 
@@ -64,7 +73,22 @@ The default baseline is the bundled [official public example](official/Submissio
 
 This command runs the full canonical local evaluation with one wall-time replay per case. Check both the correctness verdict and full-plan eligibility. An accepted submission can still have failed cases and no computation total.
 
-The optional diagnostic command currently supports `fib`, `partition`, `mertens`, and `primecount`. Use `compare` for this problem.
+## Run diagnostics
+
+After setup, measure the official example on all six local public inputs:
+
+```bash
+python3 benchmark.py diagnostic --problem ca-rule110 --metric wall-time
+```
+
+Use `--submission /path/to/Submission.lean` to include your file. Select `--metric callgrind` for local instruction counts or `--metric pmu` on a host that permits hardware counting. A smaller check includes three seeds at zero steps and the one-step example:
+
+```bash
+python3 benchmark.py diagnostic --problem ca-rule110 \
+  --inputs 0 1 2 4294967297 --metric wall-time --repetitions 1
+```
+
+Expected outputs come from an independent Python simulation of 256 Boolean cells with the Rule 110 truth table. Reports retain the exact natural-number output, decoded steps and seed, raw replay samples, and failed cases. The default process-tree memory watchdog is 4096 MiB; override it with `--memory-mb`. Diagnostic limits and measurements are described in [the methodology](../../docs/methodology.md). These selected-output checks do not establish the universal theorem or an official score.
 
 ## Pinned upstream references
 

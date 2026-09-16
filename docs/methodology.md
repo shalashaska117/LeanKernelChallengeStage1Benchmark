@@ -24,9 +24,11 @@ The measured computation interval is the target declaration's kernel replay. Pro
 
 ## Diagnostic runs
 
-`python3 benchmark.py diagnostic` supports `fib`, `partition`, `mertens`, `primecount`, and `permanent`. For the first four problems it uses the six public range endpoints listed in each problem's `cases.json`. For `permanent` it uses the 15 packed inputs from the pinned evaluator's unseeded local plan, with five cases each at dimensions 6, 12 and 16. The `--inputs` option selects an explicit custom set.
+`python3 benchmark.py diagnostic` supports `fib`, `partition`, `mertens`, `primecount`, `permanent`, and `ca-rule110`. For the first four problems it uses the six public range endpoints listed in each problem's `cases.json`. For `permanent` it uses the 15 packed inputs from the pinned evaluator's unseeded local plan, with five cases each at dimensions 6, 12 and 16. Rule 110 uses that plan's six packed inputs, with two seeds each at 2, 4 and 8 steps. The `--inputs` option selects an explicit custom set.
 
 Prime-counting expected answers use an independent Python sieve of Eratosthenes. Matrix-permanent answers use a Python matrix generator and subset dynamic programming. Each state records occupied columns and the number of partial row assignments; each layer adds one row. The packed input is decoded before allocating states, so the matrix dimension determines the computation's size. Reports include the decoded dimension and 32-bit seed.
+
+Rule 110 answers come from a separate Python simulation of 256 Boolean cells, updated simultaneously through the eight-entry truth table with cyclic neighbors. Its seed mixer follows Lean's natural-number arithmetic: the initial seed-plus-offset remains unbounded until the first multiplication is masked to 32 bits. Tests compare this cell simulation with integer rotations and a Boolean identity. Rule 110 reports record the decoded step count and 32-bit seed beside each packed input.
 
 Diagnostic runs check selected exact-output cases and audit the exported axioms. They do not run the canonical universal-proof comparator or establish full-plan eligibility. A case can succeed even when the submitted `impl_correct` declaration would fail canonical verification. Use `compare` for that check.
 

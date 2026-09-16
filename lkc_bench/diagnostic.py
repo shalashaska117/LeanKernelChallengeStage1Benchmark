@@ -39,6 +39,7 @@ DEFAULT_INPUTS = {
         53794586207, 54079857374, 54224806958, 51875434732, 54751654040,
         71077100717, 72835838140, 72703668916, 70268834944, 69508517010,
     ],
+    "ca-rule110": [12551916119, 10588838281, 18550129185, 18418222002, 34820276714, 38244662432],
 }
 DEFAULT_MEMORY_MB = {problem: 8192 if problem == "permanent" else 4096 for problem in DEFAULT_INPUTS}
 TARGET_ENCODING = "direct-rfl-v1-experimental"
@@ -100,12 +101,33 @@ def permanent_value(n: int) -> int:
     return states.get((1 << dimension) - 1, 0)
 
 
+def rule110_value(n: int) -> int:
+    """Evolve 256 Boolean cells with the eight-entry Rule 110 truth table."""
+    steps, seed = n >> 32, n & 0xffffffff
+
+    def mix(value: int) -> int:
+        # Nat does not truncate the initial seed-plus-offset before this shift.
+        value = ((value ^ (value >> 16)) * 0x7feb352d) & 0xffffffff
+        value = ((value ^ (value >> 15)) * 0x846ca68b) & 0xffffffff
+        return (value ^ (value >> 16)) & 0xffffffff
+
+    row = [True, False] + [bool(mix(seed + (i + 1) * 0x9e3779b9) & (1 << 31))
+                           for i in range(2, 256)]
+    truth_table = (False, True, True, True, False, True, True, False)
+    for _ in range(steps):
+        row = [truth_table[4 * row[(i - 1) % 256] + 2 * row[i] + row[(i + 1) % 256]]
+               for i in range(256)]
+    return sum(int(cell) << i for i, cell in enumerate(row))
+
+
 def expected_values(problem: str, inputs: list[int]) -> dict[int, int]:
     """Compute integer test answers without invoking the submitted Lean code."""
     if not inputs or any(isinstance(n, bool) or not isinstance(n, int) or n < 0 for n in inputs):
         raise ValueError("Inputs must be a nonempty list of natural numbers.")
     if problem == "permanent":
         return {n: permanent_value(n) for n in inputs}
+    if problem == "ca-rule110":
+        return {n: rule110_value(n) for n in inputs}
     if problem == "fib":
         answers = {}
         for n in inputs:
@@ -336,7 +358,8 @@ def _summarize(report: dict) -> None:
 
 
 def _write_markdown(output: Path, report: dict) -> None:
-    input_label = "Packed input (dimension, seed)" if report["problem"] == "permanent" else "Input"
+    scale = {"permanent": "dimension", "ca-rule110": "steps"}.get(report["problem"])
+    input_label = f"Packed input ({scale}, seed)" if scale else "Input"
     lines = [
         f"# {report['problem']} local diagnostic", "",
         f"Metric: `{report['metric']}`. Repetitions per input: {report['repetitions']}. "
@@ -351,8 +374,7 @@ def _write_markdown(output: Path, report: dict) -> None:
             samples = ", ".join(str(sample["value"]) for sample in case["samples"] if sample.get("status") == "complete") or "n/a"
             median = str(case["median"]) if case.get("median") is not None else "n/a"
             status = case["status"] + (f" ({case['failure_phase']})" if case.get("failure_phase") else "")
-            shown_input = (f"{case['n']} ({case['dimension']}, {case['seed']})"
-                           if report["problem"] == "permanent" else str(case["n"]))
+            shown_input = f"{case['n']} ({case[scale]}, {case['seed']})" if scale else str(case["n"])
             lines.append(f"| {run['role']} | {shown_input} | {status} | {samples} | {median} | {report['unit']} |")
     if report["comparisons"]:
         lines += ["", "| Input | Baseline / candidate | Candidate reduction |", "| ---: | ---: | ---: |"]
@@ -436,6 +458,9 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
     if args.problem == "permanent":
         report["input_encoding"] = "packed-v1: (dimension << 32) | seed"
         report["expected_output_method"] = "Independent Python matrix generator and subset dynamic programming"
+    elif args.problem == "ca-rule110":
+        report["input_encoding"] = "packed-v1: (steps << 32) | seed"
+        report["expected_output_method"] = "Independent Python simulation of 256 Boolean cells with a truth table"
     for tool in ("lean", "lake", *(["valgrind"] if args.metric == "callgrind" else [])):
         step = _step([tool, "--version"], cwd=package, env=env, log=output / f"{tool}-version.log",
                      root=output, timeout=args.timeout, memory_mb=args.memory_mb)
@@ -459,9 +484,10 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
                   "source_artifact": copied.relative_to(output).as_posix(),
                   "cases": [{"n": n, "expected": str(values[n]), "target": targets[n],
                              "status": "pending", "samples": [], "median": None} for n in inputs]}
-        if args.problem == "permanent":
+        scale = {"permanent": "dimension", "ca-rule110": "steps"}.get(args.problem)
+        if scale:
             for case in record["cases"]:
-                case.update(dimension=case["n"] >> 32, seed=case["n"] & 0xffffffff)
+                case.update({scale: case["n"] >> 32, "seed": case["n"] & 0xffffffff})
         report["runs"].append(record)
         local_env = dict(env)
         local_env["LEAN_PATH"] = str(work) + (os.pathsep + lean_path if lean_path else "")

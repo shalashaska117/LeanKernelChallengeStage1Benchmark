@@ -47,7 +47,7 @@ def parser() -> argparse.ArgumentParser:
         command.add_argument("--output", type=Path, help="New output directory; default: results/PROBLEM/TIMESTAMP-ID")
         if name == "diagnostic":
             command.add_argument("--metric", choices=("wall-time", "callgrind", "pmu"), default="wall-time")
-            command.add_argument("--inputs", type=natural, nargs="+", help="Exact natural-number inputs; default: documented endpoints or permanent's 15 public packed cases")
+            command.add_argument("--inputs", type=natural, nargs="+", help="Exact natural-number inputs; default: documented endpoints or packed cases from the public local plan")
             command.add_argument("--repetitions", type=positive_int, default=3)
             command.add_argument("--memory-mb", type=positive_int,
                                  help="Process RSS watchdog and Lean allocation limit; default: 8192 for permanent, 4096 otherwise")

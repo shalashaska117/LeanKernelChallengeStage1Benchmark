@@ -12,6 +12,23 @@ from lkc_bench import diagnostic
 from lkc_bench.workspace import BENCHMARK_DIRS, ROOT
 
 
+def packed_rule110_oracle(steps, seed):
+    """Use integer rotations and a Boolean identity, independently of cell updates."""
+    word = 1
+    for position in range(2, 256):
+        value = seed + (position + 1) * 2654435769
+        value = ((value ^ (value // 65536)) * 2146121005) % 4294967296
+        value = ((value ^ (value // 32768)) * 2221713035) % 4294967296
+        value ^= value // 65536
+        word |= (value // 2147483648) << position
+    mask = (1 << 256) - 1
+    for _ in range(steps):
+        left = ((word << 1) | (word >> 255)) & mask
+        right = (word >> 1) | ((word & 1) << 255)
+        word = (word | right) & ~(left & word & right) & mask
+    return word
+
+
 class ExpectedOutputTests(unittest.TestCase):
     def test_fibonacci_matches_iterative_recurrence(self):
         a, b, expected = 0, 1, {}
@@ -34,7 +51,7 @@ class ExpectedOutputTests(unittest.TestCase):
         self.assertEqual(diagnostic.expected_values("mertens", list(expected)), expected)
 
     def test_invalid_inputs_fail(self):
-        for problem in ("fib", "permanent"):
+        for problem in ("fib", "permanent", "ca-rule110"):
             for inputs in ([], [-1], [True], [1.5]):
                 with self.subTest(problem=problem, inputs=inputs), self.assertRaises(ValueError):
                     diagnostic.expected_values(problem, inputs)
@@ -77,24 +94,57 @@ class ExpectedOutputTests(unittest.TestCase):
         for problem, inputs in diagnostic.DEFAULT_INPUTS.items():
             manifest = json.loads((ROOT / "benchmarks" / BENCHMARK_DIRS[problem] / "cases.json").read_text())
             self.assertEqual(manifest["diagnostic_inputs"], inputs)
-        manifest = json.loads((ROOT / "benchmarks/5-permanent/cases.json").read_text())
-        sampled = []
-        for group in manifest["groups"]:
-            policy, seen = group["sampling"], set()
-            for case in range(policy["count"]):
-                attempt = 0
-                while True:
-                    message = json.dumps(["permanent", group["id"], case, "packed-seed", attempt],
-                                         separators=(",", ":")).encode()
-                    seed = int.from_bytes(hmac.new(b"", b"lean-kernel-challenge/grouped-evaluation-sample-v1\0"
-                                                  + message, hashlib.sha256).digest()[:4], "big")
-                    attempt += 1
-                    if seed not in seen:
-                        seen.add(seed)
-                        break
-                sampled.append((policy["scale"] << policy["seed_bits"]) | seed)
-        self.assertEqual(sampled, diagnostic.DEFAULT_INPUTS["permanent"])
-        self.assertEqual(manifest["memory_mb"], diagnostic.DEFAULT_MEMORY_MB["permanent"])
+        for problem in ("permanent", "ca-rule110"):
+            manifest = json.loads((ROOT / "benchmarks" / BENCHMARK_DIRS[problem] / "cases.json").read_text())
+            sampled = []
+            for group in manifest["groups"]:
+                policy, seen = group["sampling"], set()
+                for case in range(policy["count"]):
+                    attempt = 0
+                    while True:
+                        message = json.dumps([problem, group["id"], case, "packed-seed", attempt],
+                                             separators=(",", ":")).encode()
+                        seed = int.from_bytes(hmac.new(b"", b"lean-kernel-challenge/grouped-evaluation-sample-v1\0"
+                                                      + message, hashlib.sha256).digest()[:4], "big")
+                        attempt += 1
+                        if seed not in seen:
+                            seen.add(seed)
+                            break
+                    sampled.append((policy["scale"] << policy["seed_bits"]) | seed)
+            self.assertEqual(sampled, diagnostic.DEFAULT_INPUTS[problem])
+            self.assertEqual(manifest["memory_mb"], diagnostic.DEFAULT_MEMORY_MB[problem])
+
+    def test_rule110_official_one_step_example(self):
+        value = 62412942364118713680778432052760708221590981514164502482365323362230212198349
+        self.assertEqual(diagnostic.expected_values("ca-rule110", [4294967297]), {4294967297: value})
+
+    def test_rule110_zero_steps_preserves_seeded_row_and_forced_cells(self):
+        seeds = (0, 1, 2, 0x80000000, 0xffffffff)
+        answers = diagnostic.expected_values("ca-rule110", list(seeds))
+        for seed in seeds:
+            with self.subTest(seed=seed):
+                self.assertEqual(answers[seed], packed_rule110_oracle(0, seed))
+                self.assertEqual(answers[seed] & 3, 1)
+                self.assertLess(answers[seed], 1 << 256)
+        self.assertEqual(len(set(answers.values())), len(seeds))
+
+    def test_rule110_matches_independent_packed_oracle_at_seed_extremes(self):
+        expected = {(steps << 32) | seed: packed_rule110_oracle(steps, seed)
+                    for steps in (1, 2, 4, 8, 17)
+                    for seed in (0, 1, 0x12345678, 0x80000000, 0xffffffff)}
+        self.assertEqual(diagnostic.expected_values("ca-rule110", list(expected)), expected)
+
+    def test_rule110_public_plan_matches_independent_packed_oracle(self):
+        inputs = diagnostic.DEFAULT_INPUTS["ca-rule110"]
+        self.assertEqual([n >> 32 for n in inputs], [2, 2, 4, 4, 8, 8])
+        expected = {n: packed_rule110_oracle(n >> 32, n & 0xffffffff) for n in inputs}
+        self.assertEqual(diagnostic.expected_values("ca-rule110", inputs), expected)
+
+    def test_rule110_target_preserves_full_nat_output(self):
+        value = 62412942364118713680778432052760708221590981514164502482365323362230212198349
+        source = diagnostic.target_source(4294967297, value, "Test.rule110", "Nat")
+        self.assertIn("Lean.mkNatLit 4294967297", source)
+        self.assertIn(f"let rhs := Lean.mkNatLit {value}", source)
 
     def test_permanent_target_preserves_the_packed_nat_literal(self):
         source = diagnostic.target_source(71077100717, 165, "Test.permanent", "Nat")
@@ -156,6 +206,18 @@ class MeasurementTests(unittest.TestCase):
 
 
 class SummaryTests(unittest.TestCase):
+    def test_rule110_markdown_shows_decoded_steps_and_seed(self):
+        report = {"problem": "ca-rule110", "inputs": [4294967297], "metric": "wall-time", "unit": "ns",
+                  "repetitions": 1, "runs": [{"role": "baseline", "cases": [
+                      {"n": 4294967297, "steps": 1, "seed": 1, "status": "complete", "median": 7,
+                       "samples": [{"status": "complete", "value": 7}]}]}]}
+        diagnostic._summarize(report)
+        with tempfile.TemporaryDirectory() as temporary:
+            diagnostic._write_markdown(Path(temporary), report)
+            text = (Path(temporary) / "diagnostic.md").read_text()
+        self.assertIn("Packed input (steps, seed)", text)
+        self.assertIn("4294967297 (1, 1)", text)
+
     def test_incomplete_case_has_no_total_or_ratio(self):
         report = {
             "inputs": [1, 2],
