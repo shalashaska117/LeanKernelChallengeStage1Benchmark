@@ -1,0 +1,64 @@
+{
+  "schema": "lkc-benchmark-cases-v1",
+  "id": "fib",
+  "naive_spec_cost": "Linear (brecOn)",
+  "title": "Fibonacci",
+  "output_type": "Nat",
+  "specification": "Nat.fib",
+  "upstream_revision": "eb5e8850cdec9acf52d615529f9d1d64894e44b9",
+  "canonical_config": "evaluation/problems/fib/config.json",
+  "input_encoding": "direct Nat input",
+  "memory_mb": 4096,
+  "diagnostic_inputs": [
+    5000,
+    10000,
+    20000,
+    40000,
+    80000,
+    150000
+  ],
+  "groups": [
+    {
+      "id": "F1",
+      "description": "Small",
+      "sampling": {
+        "kind": "geometric_range",
+        "min": 5000,
+        "max": 10000,
+        "count": 2,
+        "jitter": 0.15
+      },
+      "limits": {
+        "timeout_seconds": 30
+      }
+    },
+    {
+      "id": "F2",
+      "description": "Medium",
+      "sampling": {
+        "kind": "geometric_range",
+        "min": 20000,
+        "max": 40000,
+        "count": 2,
+        "jitter": 0.15
+      },
+      "limits": {
+        "timeout_seconds": 60
+      }
+    },
+    {
+      "id": "F3",
+      "description": "Large",
+      "sampling": {
+        "kind": "geometric_range",
+        "min": 80000,
+        "max": 150000,
+        "count": 2,
+        "jitter": 0.15
+      },
+      "limits": {
+        "timeout_seconds": 120
+      }
+    }
+  ]
+}

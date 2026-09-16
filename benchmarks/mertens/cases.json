@@ -1,0 +1,64 @@
+{
+  "schema": "lkc-benchmark-cases-v1",
+  "id": "mertens",
+  "naive_spec_cost": "Quadratic",
+  "title": "Mertens function",
+  "output_type": "Int",
+  "specification": "mertensSpec",
+  "upstream_revision": "eb5e8850cdec9acf52d615529f9d1d64894e44b9",
+  "canonical_config": "evaluation/problems/mertens/config.json",
+  "input_encoding": "direct Nat input",
+  "memory_mb": 4096,
+  "diagnostic_inputs": [
+    25,
+    50,
+    80,
+    150,
+    300,
+    500
+  ],
+  "groups": [
+    {
+      "id": "M1",
+      "description": "Small",
+      "sampling": {
+        "kind": "geometric_range",
+        "min": 25,
+        "max": 50,
+        "count": 2,
+        "jitter": 0.15
+      },
+      "limits": {
+        "timeout_seconds": 30
+      }
+    },
+    {
+      "id": "M2",
+      "description": "Medium",
+      "sampling": {
+        "kind": "geometric_range",
+        "min": 80,
+        "max": 150,
+        "count": 2,
+        "jitter": 0.15
+      },
+      "limits": {
+        "timeout_seconds": 60
+      }
+    },
+    {
+      "id": "M3",
+      "description": "Large",
+      "sampling": {
+        "kind": "geometric_range",
+        "min": 300,
+        "max": 500,
+        "count": 2,
+        "jitter": 0.15
+      },
+      "limits": {
+        "timeout_seconds": 120
+      }
+    }
+  ]
+}

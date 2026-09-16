@@ -1,0 +1,23 @@
+# Downloads, submissions, generated proof targets, and local reports stay local.
+.cache/
+results/
+submissions/
+*.lean
+*.olean
+*.ilean
+*.ir
+*.ndjson
+*.out
+*.log
+*.csv
+*.prof
+*.lake/
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+.DS_Store
+Thumbs.db
+*.zip
+*.tar*

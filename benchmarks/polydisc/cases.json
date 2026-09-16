@@ -1,0 +1,54 @@
+{
+  "schema": "lkc-benchmark-cases-v1",
+  "id": "polydisc",
+  "naive_spec_cost": "Normal subresultant PRS; reduced Bareiss fallback",
+  "title": "Polynomial discriminant",
+  "output_type": "Int",
+  "specification": "discSpec",
+  "upstream_revision": "eb5e8850cdec9acf52d615529f9d1d64894e44b9",
+  "canonical_config": "evaluation/problems/polydisc/config.json",
+  "input_encoding": "complete Nat selects a coefficient-width band and generator seed; not packed",
+  "memory_mb": 4096,
+  "diagnostic_inputs": null,
+  "groups": [
+    {
+      "id": "D1",
+      "description": "Maximum coefficient width 15 bits",
+      "sampling": {
+        "kind": "uniform_int",
+        "min": 262144,
+        "max": 33554432,
+        "count": 2
+      },
+      "limits": {
+        "timeout_seconds": 30
+      }
+    },
+    {
+      "id": "D3",
+      "description": "Maximum coefficient width 205 bits",
+      "sampling": {
+        "kind": "uniform_int",
+        "min": 137438953472,
+        "max": 35184372088832,
+        "count": 2
+      },
+      "limits": {
+        "timeout_seconds": 60
+      }
+    },
+    {
+      "id": "D5",
+      "description": "Maximum coefficient width 3484 bits",
+      "sampling": {
+        "kind": "uniform_int",
+        "min": 144115188075855872,
+        "max": 9223372036854775808,
+        "count": 2
+      },
+      "limits": {
+        "timeout_seconds": 120
+      }
+    }
+  ]
+}

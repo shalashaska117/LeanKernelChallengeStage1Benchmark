@@ -1,0 +1,57 @@
+{
+  "schema": "lkc-benchmark-cases-v1",
+  "id": "primecount",
+  "naive_spec_cost": "Quadratic",
+  "title": "Prime counting",
+  "output_type": "Nat",
+  "specification": "primeCountSpec",
+  "upstream_revision": "eb5e8850cdec9acf52d615529f9d1d64894e44b9",
+  "canonical_config": "evaluation/problems/primecount/config.json",
+  "input_encoding": "direct Nat input",
+  "memory_mb": 4096,
+  "diagnostic_inputs": null,
+  "groups": [
+    {
+      "id": "Q1",
+      "description": "Small",
+      "sampling": {
+        "kind": "geometric_range",
+        "min": 50,
+        "max": 100,
+        "count": 2,
+        "jitter": 0.15
+      },
+      "limits": {
+        "timeout_seconds": 30
+      }
+    },
+    {
+      "id": "Q2",
+      "description": "Medium",
+      "sampling": {
+        "kind": "geometric_range",
+        "min": 150,
+        "max": 300,
+        "count": 2,
+        "jitter": 0.15
+      },
+      "limits": {
+        "timeout_seconds": 60
+      }
+    },
+    {
+      "id": "Q3",
+      "description": "Large",
+      "sampling": {
+        "kind": "geometric_range",
+        "min": 600,
+        "max": 1000,
+        "count": 2,
+        "jitter": 0.15
+      },
+      "limits": {
+        "timeout_seconds": 120
+      }
+    }
+  ]
+}

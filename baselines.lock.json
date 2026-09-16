@@ -1,0 +1,85 @@
+{
+  "upstream_revision": "eb5e8850cdec9acf52d615529f9d1d64894e44b9",
+  "baselines": {
+    "fib": {
+      "example": {
+        "path": "examples/fib/Submission.lean",
+        "sha256": "d7a034fabb9857265ca22cf67a575cd8bf26308deee9ff736af5f435f90ada4f"
+      },
+      "starter": {
+        "path": "problems/fib/Submission.lean",
+        "sha256": "cb177ad713f320dde351dd49f221b4f10dff66199c7b0bc5db48f43f65f5ffd3"
+      }
+    },
+    "partition": {
+      "example": {
+        "path": "examples/partition/Submission.lean",
+        "sha256": "db37ad6f10a67da0ade5ca30efd4c304154551d5e324ac6de11f1ec3be435528"
+      },
+      "starter": {
+        "path": "problems/partition/Submission.lean",
+        "sha256": "19cf636245f1fde66fac04ac82a88f728e9071056278eab0a1bcc11ad9b50305"
+      }
+    },
+    "mertens": {
+      "example": {
+        "path": "examples/mertens/Submission.lean",
+        "sha256": "8e2890506e0449cdfecdb5f9f4c41ad7cc856c8c9dd8258ac6314aa069976dee"
+      },
+      "starter": {
+        "path": "problems/mertens/Submission.lean",
+        "sha256": "7afa8f9c07309aea443430ff1fb4ef167ab7c4dd2751fea406c2fd05b177d766"
+      }
+    },
+    "primecount": {
+      "example": {
+        "path": "examples/primecount/Submission.lean",
+        "sha256": "614ab91f6707e78d99f5e8db0ad01cae1a2a6a1d9c74761431ed1d9083fd02e6"
+      },
+      "starter": {
+        "path": "problems/primecount/Submission.lean",
+        "sha256": "86472e6a1f1a369c7aa53e3dd4d9c96a47a6d2116ecf16bbd6b3a59e5b2f2202"
+      }
+    },
+    "permanent": {
+      "example": {
+        "path": "examples/permanent/Submission.lean",
+        "sha256": "6119f93fbf17b6a347191316ca842827afbbf34a88c18948b77ae1b684457f9e"
+      },
+      "starter": {
+        "path": "problems/permanent/Submission.lean",
+        "sha256": "85989c765dcb2d49b98b063049cf96aefe0ce30fdf97ea96fd773438b273a694"
+      }
+    },
+    "ca-rule110": {
+      "example": {
+        "path": "examples/ca-rule110/Submission.lean",
+        "sha256": "9bf1304e278231877f63859bf8cd2f65b1f70039d292539273d83ce425e6afa2"
+      },
+      "starter": {
+        "path": "problems/ca-rule110/Submission.lean",
+        "sha256": "eb748e3997edb9d0bc00ccfd890cc4ba1ad2662b0faff128ee1863bde0075682"
+      }
+    },
+    "sha256": {
+      "example": {
+        "path": "examples/sha256/Submission.lean",
+        "sha256": "373986685cddd293c4a09b87ba713a84269a349e714fb99574bd9cc5c677f69e"
+      },
+      "starter": {
+        "path": "problems/sha256/Submission.lean",
+        "sha256": "d162b7a1f7798d89ce639525d031f277a7b60454b58df4bc8e2b863811790487"
+      }
+    },
+    "polydisc": {
+      "example": {
+        "path": "examples/polydisc/Submission.lean",
+        "sha256": "8cf361a14699c741916e8664320937867a78320053cc49ce79da3920b6a4768e"
+      },
+      "starter": {
+        "path": "problems/polydisc/Submission.lean",
+        "sha256": "53d94c2db83ea796d1b9ea05e8bbe9687547a8dfb72479b0455e4527524e294c"
+      }
+    }
+  }
+}

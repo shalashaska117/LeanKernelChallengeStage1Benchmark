@@ -1,0 +1,54 @@
+{
+  "schema": "lkc-benchmark-cases-v1",
+  "id": "ca-rule110",
+  "naive_spec_cost": "Linear in steps, list-based",
+  "title": "Rule 110 cellular automaton",
+  "output_type": "Nat",
+  "specification": "caSpecN",
+  "upstream_revision": "eb5e8850cdec9acf52d615529f9d1d64894e44b9",
+  "canonical_config": "evaluation/problems/ca-rule110/config.json",
+  "input_encoding": "packed-v1: (steps << 32) | seed",
+  "memory_mb": 4096,
+  "diagnostic_inputs": null,
+  "groups": [
+    {
+      "id": "C1",
+      "description": "2 steps",
+      "sampling": {
+        "kind": "packed",
+        "scale": 2,
+        "seed_bits": 32,
+        "count": 2
+      },
+      "limits": {
+        "timeout_seconds": 30
+      }
+    },
+    {
+      "id": "C2",
+      "description": "4 steps",
+      "sampling": {
+        "kind": "packed",
+        "scale": 4,
+        "seed_bits": 32,
+        "count": 2
+      },
+      "limits": {
+        "timeout_seconds": 60
+      }
+    },
+    {
+      "id": "C3",
+      "description": "8 steps",
+      "sampling": {
+        "kind": "packed",
+        "scale": 8,
+        "seed_bits": 32,
+        "count": 2
+      },
+      "limits": {
+        "timeout_seconds": 120
+      }
+    }
+  ]
+}

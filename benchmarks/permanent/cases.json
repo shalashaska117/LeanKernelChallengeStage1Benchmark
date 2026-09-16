@@ -1,0 +1,54 @@
+{
+  "schema": "lkc-benchmark-cases-v1",
+  "id": "permanent",
+  "naive_spec_cost": "Exponential in dimension (pruned DFS)",
+  "title": "Seeded matrix permanent",
+  "output_type": "Nat",
+  "specification": "permanentSpecN",
+  "upstream_revision": "eb5e8850cdec9acf52d615529f9d1d64894e44b9",
+  "canonical_config": "evaluation/problems/permanent/config.json",
+  "input_encoding": "packed-v1: (dimension << 32) | seed",
+  "memory_mb": 8192,
+  "diagnostic_inputs": null,
+  "groups": [
+    {
+      "id": "R1",
+      "description": "6 by 6 matrices",
+      "sampling": {
+        "kind": "packed",
+        "scale": 6,
+        "seed_bits": 32,
+        "count": 5
+      },
+      "limits": {
+        "timeout_seconds": 30
+      }
+    },
+    {
+      "id": "R2",
+      "description": "12 by 12 matrices",
+      "sampling": {
+        "kind": "packed",
+        "scale": 12,
+        "seed_bits": 32,
+        "count": 5
+      },
+      "limits": {
+        "timeout_seconds": 60
+      }
+    },
+    {
+      "id": "R3",
+      "description": "16 by 16 matrices",
+      "sampling": {
+        "kind": "packed",
+        "scale": 16,
+        "seed_bits": 32,
+        "count": 5
+      },
+      "limits": {
+        "timeout_seconds": 120
+      }
+    }
+  ]
+}

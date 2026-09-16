@@ -1,0 +1,54 @@
+{
+  "schema": "lkc-benchmark-cases-v1",
+  "id": "sha256",
+  "naive_spec_cost": "Linear in steps, word-per-Nat",
+  "title": "Seeded SHA-256 chains",
+  "output_type": "Nat",
+  "specification": "sha256Spec",
+  "upstream_revision": "eb5e8850cdec9acf52d615529f9d1d64894e44b9",
+  "canonical_config": "evaluation/problems/sha256/config.json",
+  "input_encoding": "packed-v1: (steps << 32) | seed",
+  "memory_mb": 4096,
+  "diagnostic_inputs": null,
+  "groups": [
+    {
+      "id": "H1",
+      "description": "4 steps",
+      "sampling": {
+        "kind": "packed",
+        "scale": 4,
+        "seed_bits": 32,
+        "count": 2
+      },
+      "limits": {
+        "timeout_seconds": 30
+      }
+    },
+    {
+      "id": "H2",
+      "description": "32 steps",
+      "sampling": {
+        "kind": "packed",
+        "scale": 32,
+        "seed_bits": 32,
+        "count": 2
+      },
+      "limits": {
+        "timeout_seconds": 60
+      }
+    },
+    {
+      "id": "H3",
+      "description": "512 steps",
+      "sampling": {
+        "kind": "packed",
+        "scale": 512,
+        "seed_bits": 32,
+        "count": 2
+      },
+      "limits": {
+        "timeout_seconds": 120
+      }
+    }
+  ]
+}

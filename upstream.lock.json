@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/SAIRcompetition/lean-kernel-challenge.git",
+  "revision": "eb5e8850cdec9acf52d615529f9d1d64894e44b9",
+  "lean": "leanprover/lean4:v4.33.1",
+  "comparator_revision": "3927ad383f208ae977c340a91c48ac9b497d2097",
+  "lean4export_revision": "15f6055e299ad5b89345e533cc2192f4cc00f659",
+  "checked_on": "2026-09-16"
+}
