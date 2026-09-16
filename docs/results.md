@@ -6,7 +6,7 @@ Every invocation uses a fresh output directory. Existing reports are not overwri
 
 `run.json` records the mode, problem, selected options, UTC start time, pinned upstream revision, Python and Lean versions, operating system, architecture, and SHA-256 hashes of the built tools. The benchmark report also identifies each source by SHA-256. Keep these records together when comparing runs.
 
-The public upstream example is the default baseline. Selecting `--baseline starter` changes that reference and must be recorded with the result. A comparison against either reference says nothing about the current fastest entry on the website.
+The bundled official public example is the default baseline. Its source is linked from the [problem overview](../README.md#problems), and its hash is recorded in [baselines.lock.json](../baselines.lock.json). Selecting `--baseline starter` changes that reference and must be recorded with the result. A comparison against either reference says nothing about the current fastest entry on the website.
 
 Read integer inputs without rounding. Some polynomial discriminant inputs exceed JavaScript's safe integer range; use an integer-preserving JSON parser. Diagnostic expected outputs are decimal strings so large Fibonacci values retain every digit.
 
@@ -40,6 +40,6 @@ Different metrics cannot be compared numerically. Binary versions, proof-target 
 
 ## Sharing results
 
-The summaries are designed to omit the original source path and source content. Review them before sharing. Raw evaluator verdicts, compiler logs, profiles, and generated targets may contain paths, declaration names, or source excerpts from the file being tested. Do not commit the output directory or a submission file with a benchmark change.
+The summaries are designed to omit the original source path and source content. Review them before sharing. Raw evaluator verdicts, compiler logs, profiles, and generated targets may contain paths, declaration names, or source excerpts from the file being tested. Do not commit the output directory or participant source with a benchmark change. The only published Lean sources are the eight official examples.
 
 No precomputed participant measurements are bundled with this repository. Run both sides on the same machine and retain the records needed to reproduce the comparison.

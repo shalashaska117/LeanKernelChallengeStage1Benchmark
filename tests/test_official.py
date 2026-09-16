@@ -264,7 +264,7 @@ class ReportTests(unittest.TestCase):
                 result = official.run_comparison(args, root / "upstream", root / "out")
             self.assertTrue(result["complete"])
             self.assertEqual(result["comparison"]["total_ratio"], 2)
-            self.assertEqual(copy.call_args_list[0].args[0], root / "upstream" / "examples" / "partition" / "Submission.lean")
+            self.assertEqual(copy.call_args_list[0].args[0], official.official_baseline("partition"))
             self.assertFalse(worker.call_args.kwargs["source"].parent.exists())
             saved = json.loads((root / "out" / "summary.json").read_text())
             self.assertEqual(saved, result)

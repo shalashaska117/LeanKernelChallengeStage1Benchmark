@@ -26,6 +26,8 @@ import sys
 import time
 import uuid
 
+from .workspace import official_baseline
+
 
 DEFAULT_INPUTS = {
     "fib": [5000, 10000, 20000, 40000, 80000, 150000],
@@ -375,7 +377,8 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
         report["host"][f"{tool}_version"] = (output / step["log"]).read_text(encoding="utf-8").strip()
     token = uuid.uuid4().hex
     targets = {n: f"LkcBench_{token}.case_{index}" for index, n in enumerate(inputs)}
-    baseline = upstream / ("examples" if args.baseline == "example" else "problems") / args.problem / "Submission.lean"
+    baseline = (official_baseline(args.problem) if args.baseline == "example"
+                else upstream / "problems" / args.problem / "Submission.lean")
     sources = [("baseline", baseline)]
     if args.submission is not None:
         sources.append(("candidate", Path(args.submission).resolve()))

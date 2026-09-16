@@ -20,6 +20,8 @@ import tempfile
 import time
 from typing import Any
 
+from .workspace import official_baseline
+
 
 _PROBLEMS = ("fib", "ca-rule110", "mertens", "partition", "permanent", "polydisc", "primecount", "sha256")
 _OUTCOMES = {
@@ -362,8 +364,9 @@ def run_comparison(args: argparse.Namespace, upstream: Path, output: Path) -> di
     output.mkdir(parents=True, exist_ok=True)
     revision = subprocess.run(["git", "-C", str(upstream), "rev-parse", "HEAD"],
                               check=True, capture_output=True, text=True).stdout.strip()
-    baseline_root = "examples" if args.baseline == "example" else "problems"
-    sources = {"baseline": upstream / baseline_root / args.problem / "Submission.lean"}
+    baseline = (official_baseline(args.problem) if args.baseline == "example"
+                else upstream / "problems" / args.problem / "Submission.lean")
+    sources = {"baseline": baseline}
     if args.submission is not None:
         sources["candidate"] = Path(args.submission).expanduser().resolve()
     summary = {

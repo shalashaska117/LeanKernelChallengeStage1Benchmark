@@ -2,6 +2,10 @@
 
 Compute the signed sum of the Möbius function through `n`: M(n) = μ(1) + ... + μ(n), with M(0) = 0.
 
+## Official Lean baseline
+
+[Read the official public `Submission.lean`](official/Submission.lean). This is an unchanged copy of the organizers' pinned example and is the default comparison baseline. Its upstream path and SHA-256 are recorded in [baselines.lock.json](../../baselines.lock.json). It is distributed under [Apache-2.0](../../third_party/lean-kernel-challenge/LICENSE) and imports the fixed specification linked below.
+
 ## Interface
 
 Declarations belong in `namespace Submission`:
@@ -23,7 +27,9 @@ The bound is inclusive. Mathlib's `ArithmeticFunction.moebius` is 1 at 1, zero a
 
 Quadratic.
 
-This is the site's qualitative description of the naive specification. It describes the naive specification; it does not establish a formal complexity bound or a measured runtime for either baseline.
+The input scale is `n`, the upper limit of the Mertens sum. The quadratic label describes the naive specification across that range; it is not a bound on every valid implementation.
+
+The site's description is qualitative. It is not a formal complexity bound or a measured baseline runtime.
 
 ## Public performance groups
 
@@ -52,7 +58,7 @@ python3 benchmark.py setup --problem mertens
 python3 benchmark.py compare --problem mertens --submission /path/to/Submission.lean
 ```
 
-The default baseline is the public upstream example. Select `--baseline starter` to use the untouched upstream starter. Omit `--submission` to measure the baseline alone. Baselines are downloaded from the pinned upstream revision and may exceed performance limits.
+The default baseline is the bundled [official public example](official/Submission.lean). Select `--baseline starter` to use the untouched starter downloaded from the same pinned revision. Omit `--submission` to measure the baseline alone. Both baselines may exceed performance limits.
 
 This command runs the full canonical local evaluation with one wall-time replay per case. Check both the correctness verdict and full-plan eligibility. An accepted submission can still have failed cases and no computation total.
 

@@ -3,6 +3,15 @@
 results/
 submissions/
 *.lean
+# Only the eight pinned upstream example baselines are published.
+!benchmarks/fib/official/Submission.lean
+!benchmarks/partition/official/Submission.lean
+!benchmarks/mertens/official/Submission.lean
+!benchmarks/primecount/official/Submission.lean
+!benchmarks/permanent/official/Submission.lean
+!benchmarks/ca-rule110/official/Submission.lean
+!benchmarks/sha256/official/Submission.lean
+!benchmarks/polydisc/official/Submission.lean
 *.olean
 *.ilean
 *.ir

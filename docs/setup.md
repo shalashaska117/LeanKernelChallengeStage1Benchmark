@@ -39,11 +39,13 @@ python3 benchmark.py setup --problem fib --problem mertens
 python3 benchmark.py setup
 ```
 
-`setup --fetch-only` downloads the fixed public source without compiling it. It is useful for inspecting the public baseline and rules, but does not prepare a runnable benchmark.
+The official examples are already included in `benchmarks/<problem>/official/Submission.lean`. You can read them without running setup. They import the problem's fixed `Spec`; use the benchmark commands to run them with the correct environment.
+
+`setup --fetch-only` downloads the fixed upstream source without compiling it. It is useful for inspecting the specification, starter, evaluator, and rules, but does not prepare a runnable benchmark.
 
 Setup owns `.cache/upstream/` and `.cache/repro/`. The upstream setup script resets its managed tool checkouts before applying the pinned comparator patch. Keep work you edit outside `.cache/`. The wrapper refuses to use a modified tracked upstream checkout or an existing non-managed cache.
 
-Run setup before starting measurements, and avoid overlapping benchmark runs when comparing wall time. `baselines.lock.json` records the public example and starter hashes for every problem; the wrapper checks them before each benchmark.
+Run setup before starting measurements, and avoid overlapping benchmark runs when comparing wall time. `baselines.lock.json` records the public example's bundled and upstream paths and the starter's upstream path, with hashes for both. The wrapper checks the selected baseline before each benchmark. Keep bundled official files unchanged; copy a baseline into `submissions/` before editing it.
 
 ## Supply a submission
 
@@ -63,7 +65,7 @@ mkdir -p submissions/partition
 cp .cache/upstream/problems/partition/Submission.lean submissions/partition/Submission.lean
 ```
 
-Edit that local copy, then supply its path. `submissions/`, `.cache/`, `results/`, and all `.lean` files are ignored by Git.
+Edit that local copy, then supply its path. `submissions/`, `.cache/`, and `results/` are ignored by Git. Lean files are ignored except for the eight bundled official examples, whose exact content is checked before publication.
 
 Local evaluation executes Lean code without the competition's container isolation. Run files you trust. The `compare` command does not enforce the official container memory cap. Diagnostic memory monitoring is described in [methodology](methodology.md).
 

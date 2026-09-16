@@ -2,6 +2,10 @@
 
 Evolve a seeded cyclic row of 256 Boolean cells using Rule 110, then return the final row as a natural-number bit vector.
 
+## Official Lean baseline
+
+[Read the official public `Submission.lean`](official/Submission.lean). This is an unchanged copy of the organizers' pinned example and is the default comparison baseline. Its upstream path and SHA-256 are recorded in [baselines.lock.json](../../baselines.lock.json). It is distributed under [Apache-2.0](../../third_party/lean-kernel-challenge/LICENSE) and imports the fixed specification linked below.
+
 ## Interface
 
 Declarations belong in `namespace Submission`:
@@ -25,7 +29,9 @@ Input `4294967297` means one step with seed 1. Its output is `624129423641187136
 
 Linear in steps, list-based.
 
-This is the site's qualitative description of the naive specification. It describes the naive specification; it does not establish a formal complexity bound or a measured runtime for either baseline.
+The scale is the decoded step count, with the row width fixed at 256 cells. The naive specification updates a list of cells at each step. The packed input also contains the seed and is not itself the step count.
+
+The site's description is qualitative. It is not a formal complexity bound or a measured baseline runtime.
 
 ## Public performance groups
 
@@ -54,7 +60,7 @@ python3 benchmark.py setup --problem ca-rule110
 python3 benchmark.py compare --problem ca-rule110 --submission /path/to/Submission.lean
 ```
 
-The default baseline is the public upstream example. Select `--baseline starter` to use the untouched upstream starter. Omit `--submission` to measure the baseline alone. Baselines are downloaded from the pinned upstream revision and may exceed performance limits.
+The default baseline is the bundled [official public example](official/Submission.lean). Select `--baseline starter` to use the untouched starter downloaded from the same pinned revision. Omit `--submission` to measure the baseline alone. Both baselines may exceed performance limits.
 
 This command runs the full canonical local evaluation with one wall-time replay per case. Check both the correctness verdict and full-plan eligibility. An accepted submission can still have failed cases and no computation total.
 

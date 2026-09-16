@@ -36,9 +36,11 @@ class CliTests(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         for path in ("Submission.lean", "benchmarks/fib/Submission.lean", "results/report.json",
-                     ".cache/upstream/README.md", "docs/private.txt", "tests/fixture.lean"):
+                     ".cache/upstream/README.md", "docs/private.txt", "tests/fixture.lean",
+                     "benchmarks/fib/official/Candidate.lean", "benchmarks/unknown/official/Submission.lean"):
             self.assertFalse(module.allowed(path), path)
-        for path in ("README.md", "benchmarks/fib/cases.json", "lkc_bench/cli.py"):
+        for path in ("README.md", "benchmarks/fib/cases.json", "lkc_bench/cli.py",
+                     "benchmarks/fib/official/Submission.lean", "third_party/lean-kernel-challenge/LICENSE"):
             self.assertTrue(module.allowed(path), path)
 
 

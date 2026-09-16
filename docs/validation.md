@@ -22,4 +22,4 @@ python3 -m unittest discover -s tests -v
 python3 scripts/check_release.py
 ```
 
-The release check rejects tracked submission files, generated targets, caches, local reports, and other files outside the publication file list. It complements review of the staged diff.
+The release check permits only the eight official Lean examples at their listed paths and verifies their contents against the pinned SHA-256 hashes. It rejects other tracked Lean files, generated targets, caches, local reports, and files outside the publication file list. It complements review of the staged diff.

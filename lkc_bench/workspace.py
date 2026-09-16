@@ -37,6 +37,23 @@ def capture(command: list[str], cwd: Path | None = None) -> str:
     return result.stdout.strip()
 
 
+def official_baseline(problem: str) -> Path:
+    """Return the bundled upstream example after checking its pinned content."""
+    if problem not in PROBLEMS:
+        raise ValueError(f"Unsupported problem: {problem}")
+    references = json.loads((ROOT / "baselines.lock.json").read_text(encoding="utf-8"))
+    if references["upstream_revision"] != lock()["revision"]:
+        raise RuntimeError("Baseline hashes refer to a different upstream revision.")
+    record = references["baselines"][problem]["example"]
+    relative = f"benchmarks/{problem}/official/Submission.lean"
+    source = ROOT / relative
+    if (record.get("bundled_path") != relative or source.is_symlink()
+            or not source.resolve().is_relative_to(ROOT) or not source.is_file()
+            or sha256(source) != record["sha256"]):
+        raise RuntimeError(f"Bundled official baseline hash mismatch: {problem}")
+    return source
+
+
 def _managed_cache() -> None:
     # Upstream setup resets its tool checkouts. Only give it our own cache.
     if CACHE.is_symlink() or CACHE.resolve() != ROOT / ".cache":
@@ -75,6 +92,7 @@ def validate_upstream() -> dict:
             relative = f"{folder}/{problem}/Submission.lean"
             if record["path"] != relative or sha256(UPSTREAM / relative) != record["sha256"]:
                 raise RuntimeError(f"Public baseline hash mismatch: {problem}/{label}")
+        official_baseline(problem)
     return pins
 
 

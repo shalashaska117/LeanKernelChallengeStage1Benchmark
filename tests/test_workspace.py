@@ -61,6 +61,12 @@ class WorkspaceTests(unittest.TestCase):
                 self.references["baselines"][problem][role] = {
                     "path": relative, "sha256": hashlib.sha256(data).hexdigest(),
                 }
+                if role == "example":
+                    bundled = f"benchmarks/{problem}/official/Submission.lean"
+                    self.references["baselines"][problem][role]["bundled_path"] = bundled
+                    destination = self.root / bundled
+                    destination.parent.mkdir(parents=True)
+                    destination.write_bytes(data)
         self._git(self.origin, "add", ".")
         self._git(self.origin, "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "Add synthetic upstream fixture")
         self.pins["revision"] = self._git(self.origin, "rev-parse", "HEAD")
@@ -161,6 +167,20 @@ class WorkspaceTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "unfinished upstream checkout contains files"):
             self._setup()
         self.assertEqual(local_file.read_text(), "Preserve this file.\n")
+
+    def test_bundled_example_is_checked_and_selected_without_a_cache(self):
+        expected = self.root / "benchmarks/partition/official/Submission.lean"
+        self.assertFalse(self.upstream.exists())
+        self.assertEqual(workspace.official_baseline("partition"), expected)
+        expected.write_bytes(b"unapproved replacement\n")
+        with self.assertRaisesRegex(RuntimeError, "Bundled official baseline hash mismatch"):
+            workspace.official_baseline("partition")
+
+    def test_bundled_path_must_be_the_exact_problem_path(self):
+        self.references["baselines"]["partition"]["example"]["bundled_path"] = "../outside"
+        self._write_references()
+        with self.assertRaisesRegex(RuntimeError, "Bundled official baseline hash mismatch"):
+            workspace.official_baseline("partition")
 
     def test_setup_refuses_a_changed_origin(self):
         self._setup()
