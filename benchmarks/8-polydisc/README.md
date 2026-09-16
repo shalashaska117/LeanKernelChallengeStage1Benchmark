@@ -66,7 +66,38 @@ The default baseline is the bundled [official public example](official/Submissio
 
 This command runs the full canonical local evaluation with one wall-time replay per case. Check both the correctness verdict and full-plan eligibility. An accepted submission can still have failed cases and no computation total.
 
-The optional diagnostic command currently supports `fib`, `partition`, `mertens`, and `primecount`. Use `compare` for this problem.
+## Run diagnostics
+
+Start with a small baseline-only check:
+
+```bash
+python3 benchmark.py diagnostic --problem polydisc --inputs 0 1 19337098 \
+  --metric wall-time --repetitions 1
+```
+
+Omit `--inputs` to use the six inputs from the pinned evaluator's local plan with its empty sampling key:
+
+| Group | Case 0 | Case 1 | Maximum coefficient width |
+| --- | ---: | ---: | ---: |
+| D1 | 19337098 | 9225987 | 15 bits |
+| D3 | 6476047012455 | 10487306645701 | 205 bits |
+| D5 | 5042242704654352709 | 4530401864863699852 | 3484 bits |
+
+The sampler uses the entire HMAC-SHA256 digest, rejection sampling and distinct inputs within each group. Case order follows the evaluator's sample order. These inputs are public development cases; hidden evaluation uses a different key.
+
+```bash
+python3 benchmark.py diagnostic --problem polydisc \
+  --submission /path/to/Submission.lean --metric callgrind \
+  --repetitions 3 --timeout 600
+```
+
+The independent expected-answer code generates the 25 coefficients and builds the full 47-by-47 Sylvester matrix for `P` and its derivative. Exact integer Bareiss elimination gives the signed discriminant. It needs only Python's standard library. The expected answer is computed before timing; the measured kernel target still checks the implementation against the full output literal.
+
+JSON reports store each signed output as a decimal string. They also record the polynomial degree, width band, actual maximum coefficient bit length and total coefficient bit length. Inputs belonging to the six-case plan have their group and zero-based case index recorded. Markdown shows the input, degree and maximum coefficient width beside the measurements.
+
+The diagnostic command defaults to three replays, a 120-second timeout per tool process and a 4096 MiB memory watchdog. `--preparation-memory-mb` can set a separate allowance for target compilation and export. Source compilation, axiom audits and kernel replay keep `--memory-mb`. Per-process diagnostic timeouts are separate from the canonical group's replay limits; see [methodology](../../docs/methodology.md#diagnostic-runs).
+
+Use `compare` to check the universal theorem and canonical eligibility. Diagnostics check the chosen exact-output targets and exported axioms. A full diagnostic total is available only when every requested case and repetition completes.
 
 ## Pinned upstream references
 

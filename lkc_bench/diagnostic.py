@@ -27,6 +27,7 @@ import time
 import uuid
 
 from .workspace import official_baseline
+from .polydisc import polydisc_value, polynomial_metadata
 
 
 DEFAULT_INPUTS = {
@@ -41,6 +42,7 @@ DEFAULT_INPUTS = {
     ],
     "ca-rule110": [12551916119, 10588838281, 18550129185, 18418222002, 34820276714, 38244662432],
     "sha256": [18860801433, 17252521710, 138725260120, 140599404248, 2199121876686, 2199573357346],
+    "polydisc": [19337098, 9225987, 6476047012455, 10487306645701, 5042242704654352709, 4530401864863699852],
 }
 DEFAULT_MEMORY_MB = {problem: 8192 if problem == "permanent" else 4096 for problem in DEFAULT_INPUTS}
 PACKED_SCALE = {"permanent": "dimension", "ca-rule110": "steps", "sha256": "steps"}
@@ -149,6 +151,8 @@ def expected_values(problem: str, inputs: list[int]) -> dict[int, int]:
         return {n: rule110_value(n) for n in inputs}
     if problem == "sha256":
         return {n: sha256_value(n) for n in inputs}
+    if problem == "polydisc":
+        return {n: polydisc_value(n) for n in inputs}
     if problem == "fib":
         answers = {}
         for n in inputs:
@@ -382,6 +386,8 @@ def _summarize(report: dict) -> None:
 def _write_markdown(output: Path, report: dict) -> None:
     scale = PACKED_SCALE.get(report["problem"])
     input_label = f"Packed input ({scale}, seed)" if scale else "Input"
+    if report["problem"] == "polydisc":
+        input_label = "Input (degree, max coefficient bits)"
     lines = [
         f"# {report['problem']} local diagnostic", "",
         f"Metric: `{report['metric']}`. Repetitions per input: {report['repetitions']}. "
@@ -403,6 +409,8 @@ def _write_markdown(output: Path, report: dict) -> None:
             median = str(case["median"]) if case.get("median") is not None else "n/a"
             status = case["status"] + (f" ({case['failure_phase']})" if case.get("failure_phase") else "")
             shown_input = f"{case['n']} ({case[scale]}, {case['seed']})" if scale else str(case["n"])
+            if report["problem"] == "polydisc":
+                shown_input = f"{case['n']} ({case['degree']}, {case['coefficient_width_bits']})"
             lines.append(f"| {run['role']} | {shown_input} | {status} | {samples} | {median} | {report['unit']} |")
     if report["comparisons"]:
         lines += ["", "| Input | Baseline / candidate | Candidate reduction |", "| ---: | ---: | ---: |"]
@@ -497,6 +505,12 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
     elif args.problem == "sha256":
         report["input_encoding"] = "packed-v1: (steps << 32) | seed"
         report["expected_output_method"] = "Python LCG seed expansion followed by hashlib.sha256 on 32-byte digests"
+    elif args.problem == "polydisc":
+        report["input_encoding"] = "Complete Nat selects the coefficient-width band and MMIX LCG seed; not packed"
+        report["expected_output_method"] = "Independent Python polynomial generator and full Sylvester determinant with exact Bareiss elimination"
+        groups = (("D1", 0), ("D1", 1), ("D3", 0), ("D3", 1), ("D5", 0), ("D5", 1))
+        report["public_local_plan"] = [{"n": n, "group": group, "case": case, **polynomial_metadata(n)}
+                                       for n, (group, case) in zip(DEFAULT_INPUTS["polydisc"], groups)]
     for tool in ("lean", "lake", *(["valgrind"] if args.metric == "callgrind" else [])):
         step = _step([tool, "--version"], cwd=package, env=env, log=output / f"{tool}-version.log",
                      root=output, timeout=args.timeout, memory_mb=args.memory_mb)
@@ -524,6 +538,13 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
         if scale:
             for case in record["cases"]:
                 case.update({scale: case["n"] >> 32, "seed": case["n"] & 0xffffffff})
+        if args.problem == "polydisc":
+            public_cases = {case["n"]: case for case in report["public_local_plan"]}
+            for case in record["cases"]:
+                case.update(polynomial_metadata(case["n"]))
+                if case["n"] in public_cases:
+                    planned = public_cases[case["n"]]
+                    case.update(group=planned["group"], case=planned["case"])
         report["runs"].append(record)
         local_env = dict(env)
         local_env["LEAN_PATH"] = str(work) + (os.pathsep + lean_path if lean_path else "")
@@ -547,7 +568,8 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
             n, target = case["n"], case["target"]
             print(f"{role}: input {n}, preparing target", flush=True)
             generated = work / "Target.lean"
-            generated.write_text(target_source(n, values[n], target, "Int" if args.problem == "mertens" else "Nat"), encoding="utf-8")
+            output_type = "Int" if args.problem in ("mertens", "polydisc") else "Nat"
+            generated.write_text(target_source(n, values[n], target, output_type), encoding="utf-8")
             saved_source = work / f"target-{n}.lean"
             saved_source.write_bytes(generated.read_bytes())
             exported = work / f"target-{n}.ndjson"

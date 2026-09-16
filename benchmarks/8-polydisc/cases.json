@@ -9,7 +9,7 @@
   "canonical_config": "evaluation/problems/polydisc/config.json",
   "input_encoding": "complete Nat selects a coefficient-width band and generator seed; not packed",
   "memory_mb": 4096,
-  "diagnostic_inputs": null,
+  "diagnostic_inputs": [19337098, 9225987, 6476047012455, 10487306645701, 5042242704654352709, 4530401864863699852],
   "groups": [
     {
       "id": "D1",

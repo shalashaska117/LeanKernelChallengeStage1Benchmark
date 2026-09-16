@@ -106,3 +106,31 @@ python3 benchmark.py diagnostic --problem sha256 --metric wall-time \
 ```
 
 All six targets passed the export axiom audit and completed one kernel replay. Source compilation, axiom audits and replay retained the default 4096 MiB watchdog. Target compilation and export used 8192 MiB. For the two 512-step cases, sampled process-tree RSS peaked at about 4893 MiB during target compilation and 3390 MiB during replay. The JSON and Markdown reports record the separate limits. These are local wall-time diagnostics of the unchanged official example, not an official score.
+
+## Polynomial-discriminant diagnostics
+
+The Python tests check exact determinants against permutation sums, including singular matrices and row swaps. Discriminants are checked against quadratic and cubic formulas and products of root differences. Generator tests cover all five width bands, zero-coefficient replacement, multiword byte order and the LCG's closed form. The sampler tests exercise rejected digests, duplicate inputs and case order. A diagnostic-runner test verifies signed outputs longer than 24,000 decimal digits, exact `Int.ofNat` and `Int.negSucc` targets, group metadata and the 4096 MiB default.
+
+The full Sylvester/Bareiss oracle agrees with SymPy 1.14.0 on 19 inputs: all six local public cases, 0, 1, both sides of each width-band boundary, and the inputs `2^33`, `2^53` and `2^63`. Coefficients and their specified widths match the pinned official generator for every input. SymPy was used for this crosscheck; the diagnostic command needs only the Python standard library. The fixed Lean derivative was also evaluated on small quadratic and cubic coefficient lists and agrees with the mathematical derivative used by the oracle.
+
+All 91 tests pass on WSL; native Windows passes 90 and skips the POSIX process-group test. The worktree publication check passes for 54 files and verifies the eight unchanged official Lean source hashes.
+
+The public CLI completed this wall-time smoke check against the bundled official example:
+
+```bash
+python3 benchmark.py setup --problem polydisc
+python3 benchmark.py diagnostic --problem polydisc --inputs 0 1 19337098 \
+  --metric wall-time --repetitions 1 --timeout 120 \
+  --output results/polydisc-public-smoke
+```
+
+All three exact-output targets compiled, passed the export axiom audit, and completed one kernel replay each. Inputs 0 and 1 have negative discriminants; input 19337098 has a positive discriminant. The run used the default 4096 MiB watchdog throughout. Setup reused the pinned shared tools and built the fixed polynomial-discriminant `Spec` in the managed cache.
+
+The public CLI also completed all six default inputs with one wall-time replay each:
+
+```bash
+python3 benchmark.py diagnostic --problem polydisc --metric wall-time \
+  --repetitions 1 --timeout 120 --output results/polydisc-public-plan
+```
+
+All six targets compiled, passed the export axiom audit and completed replay within the default 4096 MiB watchdog. This includes the two D5 outputs, which have more than 24,000 decimal digits. The reports retain the full signed values and the group, case index and coefficient metadata for each input. These checks verify the diagnostic command against the unchanged official example; they do not establish an official score.

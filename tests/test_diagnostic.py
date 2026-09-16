@@ -5,6 +5,7 @@ import hmac
 import itertools
 import json
 import io
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -54,7 +55,7 @@ class ExpectedOutputTests(unittest.TestCase):
         self.assertEqual(diagnostic.expected_values("mertens", list(expected)), expected)
 
     def test_invalid_inputs_fail(self):
-        for problem in ("fib", "permanent", "ca-rule110", "sha256"):
+        for problem in ("fib", "permanent", "ca-rule110", "sha256", "polydisc"):
             for inputs in ([], [-1], [True], [1.5]):
                 with self.subTest(problem=problem, inputs=inputs), self.assertRaises(ValueError):
                     diagnostic.expected_values(problem, inputs)
@@ -257,11 +258,11 @@ class MeasurementTests(unittest.TestCase):
 
 
 class PreparationMemoryTests(unittest.TestCase):
-    def run_case(self, preparation_memory, failed_phase=None):
+    def run_case(self, preparation_memory, failed_phase=None, problem="sha256", inputs=None):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         root = Path(directory.name)
-        package = root / "upstream/evaluation/problems/sha256"
+        package = root / "upstream/evaluation/problems" / problem
         package.mkdir(parents=True)
         (package / "lean-toolchain").write_text("leanprover/lean4:v4.33.1\n")
         source = root / "Submission.lean"
@@ -282,8 +283,8 @@ class PreparationMemoryTests(unittest.TestCase):
                 Path(command[command.index("-o") + 1]).write_bytes(b"mock compiled source")
             return {"status": status, "memory_limit_mb": memory_mb, "log": log.relative_to(root).as_posix()}
 
-        args = SimpleNamespace(problem="sha256", metric="wall-time", memory_mb=4096,
-                               preparation_memory_mb=preparation_memory, baseline="example", inputs=[0],
+        args = SimpleNamespace(problem=problem, metric="wall-time", memory_mb=4096,
+                               preparation_memory_mb=preparation_memory, baseline="example", inputs=[0] if inputs is None else inputs,
                                repetitions=1, timeout=120, submission=source)
         with patch.object(diagnostic.platform, "system", return_value="Linux"), \
                 patch.object(diagnostic, "official_baseline", return_value=source), \
@@ -330,6 +331,39 @@ class PreparationMemoryTests(unittest.TestCase):
                 self.assertIsNone(report["total_baseline_over_candidate"])
                 self.assertTrue(all(case["status"] == "memory-limit" for run in report["runs"] for case in run["cases"]))
                 self.assertTrue(all(memory == 4096 for name, memory, _ in calls if name.startswith(phase)))
+
+    def test_polydisc_records_signed_large_int_and_only_matching_group_metadata(self):
+        value = -(1 << 80748) + 19
+        old_limit = sys.get_int_max_str_digits() if hasattr(sys, "get_int_max_str_digits") else None
+        if old_limit is not None:
+            sys.set_int_max_str_digits(4300)
+            self.addCleanup(sys.set_int_max_str_digits, old_limit)
+        with patch.object(diagnostic, "polydisc_value", return_value=value), \
+                patch.object(diagnostic, "target_source", wraps=diagnostic.target_source) as target:
+            report, calls, markdown = self.run_case(None, problem="polydisc", inputs=[0, 5042242704654352709])
+        self.assertTrue(report["complete"])
+        self.assertTrue(all(memory == 4096 for _, memory, _ in calls))
+        self.assertTrue(all(call.args[3] == "Int" for call in target.call_args_list))
+        for run in report["runs"]:
+            first, second = run["cases"]
+            self.assertNotIn("group", first)
+            self.assertNotIn("case", first)
+            self.assertEqual((second["group"], second["case"]), ("D5", 0))
+            self.assertEqual(second["degree"], 24)
+            self.assertEqual(second["coefficient_width_bits"], 3484)
+            self.assertNotIn("seed", second)
+            self.assertEqual(second["expected"], str(value))
+            self.assertGreater(len(second["expected"]), 24000)
+        self.assertEqual([case["n"] for case in report["public_local_plan"]], diagnostic.DEFAULT_INPUTS["polydisc"])
+        self.assertIn("full Sylvester determinant", report["expected_output_method"])
+        self.assertIn("Input (degree, max coefficient bits)", markdown)
+        self.assertIn("5042242704654352709 (24, 3484)", markdown)
+        negative = diagnostic.target_source(0, value, "Test.polydisc", "Int")
+        positive = diagnostic.target_source(19337098, -value, "Test.polydisc", "Int")
+        self.assertTrue(f"Lean.mkApp (Lean.mkConst ``Int.negSucc) (Lean.mkNatLit {-value - 1})" in negative,
+                        "The negative target must contain the complete Int.negSucc argument.")
+        self.assertTrue(f"Lean.mkApp (Lean.mkConst ``Int.ofNat) (Lean.mkNatLit {-value})" in positive,
+                        "The positive target must contain the complete Int.ofNat argument.")
 
 
 class SummaryTests(unittest.TestCase):
