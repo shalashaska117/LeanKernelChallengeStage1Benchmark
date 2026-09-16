@@ -65,7 +65,7 @@ mkdir -p submissions/partition
 cp .cache/upstream/problems/partition/Submission.lean submissions/partition/Submission.lean
 ```
 
-Edit that local copy, then supply its path. `submissions/`, `.cache/`, and `results/` are ignored by Git. Lean files are ignored except for the eight bundled official examples, whose exact content is checked before publication.
+Edit that local copy, then supply its path. `submissions/`, `.cache/`, and `results/` are ignored by Git. The release check verifies the exact content of the eight bundled official Lean examples.
 
 Local evaluation executes Lean code without the competition's container isolation. Run files you trust. The `compare` command does not enforce the official container memory cap. Diagnostic memory monitoring is described in [methodology](methodology.md).
 

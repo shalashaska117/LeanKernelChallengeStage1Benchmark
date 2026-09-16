@@ -1,4 +1,4 @@
-"""Run local exact-output kernel replay diagnostics for fib, partition and mertens.
+"""Run local exact-output kernel diagnostics for fib, partition, mertens and primecount.
 
 The runner compiles an upstream baseline and, optionally, a supplied submission.
 For each input it creates a direct Eq.refl target, exports its dependency closure,
@@ -33,6 +33,7 @@ DEFAULT_INPUTS = {
     "fib": [5000, 10000, 20000, 40000, 80000, 150000],
     "partition": [14, 18, 22, 26, 32, 36],
     "mertens": [25, 50, 80, 150, 300, 500],
+    "primecount": [50, 100, 150, 300, 600, 1000],
 }
 TARGET_ENCODING = "direct-rfl-v1-experimental"
 MEASUREMENT_CONTRACT = "kernel-replay-v2"
@@ -68,6 +69,17 @@ def expected_values(problem: str, inputs: list[int]) -> dict[int, int]:
             answers[n] = a
         return answers
     limit = max(inputs)
+    if problem == "primecount":
+        composite = bytearray(limit + 1)
+        for prime in range(2, math.isqrt(limit) + 1):
+            if not composite[prime]:
+                start = prime * prime
+                composite[start:limit + 1:prime] = b"\x01" * ((limit - start) // prime + 1)
+        values, total = [0] * (limit + 1), 0
+        for n in range(2, limit + 1):
+            total += not composite[n]
+            values[n] = total
+        return {n: values[n] for n in inputs}
     if problem == "partition":
         values = [1] + [0] * limit
         for part in range(1, limit + 1):

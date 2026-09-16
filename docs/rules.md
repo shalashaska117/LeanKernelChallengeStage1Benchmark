@@ -29,7 +29,7 @@ See the pinned [submission requirements](https://github.com/SAIRcompetition/lean
 
 Both baselines come from the repository revision recorded in the benchmark's upstream pin. They are reference entries supplied by the challenge repository. They are not a claim about the best current solution, a leaderboard entry, or the exact submission running on the hosted service. Upstream states that examples and starters may exceed performance limits.
 
-The eight official examples are included under [Apache-2.0](../third_party/lean-kernel-challenge/LICENSE). Their upstream paths, bundled paths, and SHA-256 hashes are recorded in [baselines.lock.json](../baselines.lock.json); the wrapper checks the selected source before each run. The specification, evaluator, dependencies, and optional starter are downloaded during setup. Participant solutions and local results are excluded from publication.
+The eight official examples are included under [Apache-2.0](../third_party/lean-kernel-challenge/LICENSE). Their upstream paths, bundled paths, and SHA-256 hashes are recorded in [baselines.lock.json](../baselines.lock.json); the wrapper checks the selected source before each run. The specification, evaluator, dependencies, and optional starter are downloaded during setup.
 
 ## Completion and scoring
 

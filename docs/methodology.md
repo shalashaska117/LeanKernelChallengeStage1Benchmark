@@ -24,7 +24,7 @@ The measured computation interval is the target declaration's kernel replay. Pro
 
 ## Diagnostic runs
 
-`python3 benchmark.py diagnostic` currently supports `fib`, `partition`, and `mertens`. By default it uses the six public range endpoints listed in each problem's `cases.json`. The `--inputs` option selects an explicit custom set.
+`python3 benchmark.py diagnostic` supports `fib`, `partition`, `mertens`, and `primecount`. By default it uses the six public range endpoints listed in each problem's `cases.json`. The `--inputs` option selects an explicit custom set. Prime-counting expected answers use an independent Python sieve of Eratosthenes.
 
 Diagnostic runs check selected exact-output cases and audit the exported axioms. They do not run the canonical universal-proof comparator or establish full-plan eligibility. A case can succeed even when the submitted `impl_correct` declaration would fail canonical verification. Use `compare` for that check.
 

@@ -62,7 +62,15 @@ The default baseline is the bundled [official public example](official/Submissio
 
 This command runs the full canonical local evaluation with one wall-time replay per case. Check both the correctness verdict and full-plan eligibility. An accepted submission can still have failed cases and no computation total.
 
-The optional diagnostic command currently supports `fib`, `partition`, and `mertens`. Use `compare` for this problem.
+The diagnostic mode checks selected outputs against an independent Python sieve of Eratosthenes and measures exact-output kernel target replay:
+
+```bash
+python3 benchmark.py diagnostic --problem primecount --inputs 0 1 2 10 50
+python3 benchmark.py diagnostic --problem primecount --submission /path/to/Submission.lean \
+  --inputs 50 100 150 300 600 1000 --metric callgrind --repetitions 3 --timeout 600
+```
+
+The default diagnostic inputs are the six endpoints above. Diagnostics do not check the universal correctness theorem; use `compare` for that check.
 
 ## Pinned upstream references
 

@@ -1,4 +1,4 @@
-# Validation of the initial release
+# Validation
 
 The initial release was checked on 2026-09-16 using the revision in `upstream.lock.json`.
 
@@ -13,7 +13,7 @@ Functional checks used public upstream files only:
 - The PMU failure path preserved unavailable measurements. The standalone probe distinguishes permission denial from unavailable hardware without loading a submission.
 - Per-problem manifest sampling, limits, and memory settings match all eight pinned upstream configurations.
 
-These are functional checks. No participant result or performance ranking is included. Complete benchmark runs for all eight problems and successful hardware PMU counting have not been verified on this host. The remaining problem comparisons delegate to the same pinned canonical evaluator; their runtime and resource demands depend on the problem and source.
+These checks concern the harness. Complete benchmark runs for all eight problems and successful hardware PMU counting have not been verified on this host. The remaining problem comparisons delegate to the same pinned canonical evaluator; their runtime and resource demands depend on the problem and source.
 
 Run the suite with:
 
@@ -22,4 +22,20 @@ python3 -m unittest discover -s tests -v
 python3 scripts/check_release.py
 ```
 
-The release check permits only the eight official Lean examples at their listed paths and verifies their contents against the pinned SHA-256 hashes. It rejects other tracked Lean files, generated targets, caches, local reports, and files outside the publication file list. It complements review of the staged diff.
+The release check verifies the eight official Lean examples against their pinned hashes and checks the publication file list. The default checks staged blobs; `--worktree` checks intended files before staging. It complements review of the diff.
+
+## Prime-counting diagnostics
+
+The Python suite includes independent prime-counting answers for every input from 0 through 1000 and checks the publication file filter.
+
+The unchanged public CLI also completed this prime-counting smoke check against the bundled official example:
+
+```bash
+python3 benchmark.py diagnostic --problem primecount --inputs 0 1 2 \
+  --metric wall-time --repetitions 1 --timeout 120 --memory-mb 3072 \
+  --output results/primecount-public-runner-native-packages-smoke
+```
+
+All three exact-output targets compiled, passed the export axiom audit, and completed one kernel replay each. This checks the added diagnostic branch against the unchanged official example.
+
+The smoke check reused prepared dependencies with matching package pins and artifact hashes, including `Spec`, on WSL's native filesystem. It did not repeat a fresh setup. Earlier attempts using mounted dependency paths reached the per-process timeout during dependency loading; those reports remain incomplete. The timeout includes environment preparation and dependency loading, while the reported replay metric measures only the target replay. After the successful run, the temporary native cache links were restored to durable paths.

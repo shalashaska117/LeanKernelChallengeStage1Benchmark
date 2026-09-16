@@ -4,7 +4,7 @@ Local benchmarks for testing your Lean Kernel Challenge submission against the p
 
 The eight official public examples are included in `benchmarks/<problem>/official/Submission.lean` and linked below. They are unchanged copies of `examples/<problem>/Submission.lean` from the [organizers' pinned repository](https://github.com/SAIRcompetition/lean-kernel-challenge/tree/eb5e8850cdec9acf52d615529f9d1d64894e44b9). The default baseline uses this bundled source and verifies its SHA-256 against [baselines.lock.json](baselines.lock.json). `--baseline starter` selects the participant starter downloaded from the same revision. These references do not claim to be the fastest submissions on the website.
 
-This repository contains benchmark tools, documentation, and the official public baselines. Participant submissions and generated results remain local. Nothing is submitted to SAIR or uploaded by these commands.
+This repository contains benchmark tools, documentation, and the eight official public baselines. Use `--submission` to test a Lean file against the corresponding baseline.
 
 ## Start with one problem
 
@@ -39,7 +39,7 @@ Omit `--submission` to measure only the baseline. The file must use the problem'
 | [Fibonacci](benchmarks/fib/README.md) | `fib` | [Submission.lean](benchmarks/fib/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
 | [Integer partitions](benchmarks/partition/README.md) | `partition` | [Submission.lean](benchmarks/partition/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
 | [Mertens function](benchmarks/mertens/README.md) | `mertens` | [Submission.lean](benchmarks/mertens/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
-| [Prime counting](benchmarks/primecount/README.md) | `primecount` | [Submission.lean](benchmarks/primecount/official/Submission.lean) | Available | Planned |
+| [Prime counting](benchmarks/primecount/README.md) | `primecount` | [Submission.lean](benchmarks/primecount/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
 | [Matrix permanent](benchmarks/permanent/README.md) | `permanent` | [Submission.lean](benchmarks/permanent/official/Submission.lean) | Available | Planned |
 | [Rule 110](benchmarks/ca-rule110/README.md) | `ca-rule110` | [Submission.lean](benchmarks/ca-rule110/official/Submission.lean) | Available | Planned |
 | [SHA-256](benchmarks/sha256/README.md) | `sha256` | [Submission.lean](benchmarks/sha256/official/Submission.lean) | Available | Planned |
@@ -66,7 +66,7 @@ These descriptions refer to the naive specification. Each problem guide explains
 
 `compare` calls the upstream local evaluator separately for the baseline and your file. It checks the interface, universal proof, and axioms, then attempts the complete unseeded public plan with one wall-time measurement per case. Read the completion result as well as acceptance: an accepted submission can have failed or unattempted cases. Full runs can take a long time, and a baseline can exceed the limits.
 
-`diagnostic` prepares exact-output targets for selected Fibonacci, partition, or Mertens inputs and measures kernel target replay. It keeps individual samples, export hashes, step logs, and per-case failures. It checks the selected output equalities and exported axioms; it does not verify the universal correctness theorem.
+`diagnostic` prepares exact-output targets for selected Fibonacci, partition, Mertens, or prime-counting inputs and measures kernel target replay. It keeps individual samples, export hashes, step logs, and per-case failures. It checks the selected output equalities and exported axioms; it does not verify the universal correctness theorem.
 
 ```bash
 # Repeated kernel wall-time measurements on selected inputs.

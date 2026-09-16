@@ -24,7 +24,7 @@ The wrapper compares complete runs only when their problem, case identities, met
 
 The diagnostic target checks that `Submission.impl n` reduces to an independently calculated exact output. It does not check the statement or completeness of `Submission.impl_correct`. A successful diagnostic run needs a separate full evaluator run before it can support a claim about submission acceptance.
 
-The default inputs are the six published group endpoints for the three supported diagnostic problems. Custom `--inputs` can test boundaries or small examples. They do not replace an official seeded plan. Diagnostic totals, where shown, refer only to the requested inputs.
+The default inputs are the six published group endpoints for the four supported diagnostic problems. Custom `--inputs` can test boundaries or small examples. They do not replace an official seeded plan. Diagnostic totals, where shown, refer only to the requested inputs.
 
 ## Ratios
 
@@ -40,6 +40,4 @@ Different metrics cannot be compared numerically. Binary versions, proof-target 
 
 ## Sharing results
 
-The summaries are designed to omit the original source path and source content. Review them before sharing. Raw evaluator verdicts, compiler logs, profiles, and generated targets may contain paths, declaration names, or source excerpts from the file being tested. Do not commit the output directory or participant source with a benchmark change. The only published Lean sources are the eight official examples.
-
-No precomputed participant measurements are bundled with this repository. Run both sides on the same machine and retain the records needed to reproduce the comparison.
+The summaries are designed to omit the original source path and source content. Review them before sharing. Raw evaluator verdicts, compiler logs, profiles, and generated targets may contain paths, declaration names, or source excerpts from the file being tested. Run both sides on the same machine and retain the records needed to reproduce a comparison.

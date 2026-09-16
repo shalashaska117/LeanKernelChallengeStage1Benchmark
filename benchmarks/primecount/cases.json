@@ -9,7 +9,7 @@
   "canonical_config": "evaluation/problems/primecount/config.json",
   "input_encoding": "direct Nat input",
   "memory_mb": 4096,
-  "diagnostic_inputs": null,
+  "diagnostic_inputs": [50, 100, 150, 300, 600, 1000],
   "groups": [
     {
       "id": "Q1",

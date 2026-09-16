@@ -34,6 +34,15 @@ class ExpectedOutputTests(unittest.TestCase):
             with self.subTest(inputs=inputs), self.assertRaises(ValueError):
                 diagnostic.expected_values("fib", inputs)
 
+    def test_primecount_matches_trial_division_including_zero_and_one(self):
+        total, expected = 0, {}
+        for n in range(1001):
+            if n >= 2 and all(n % divisor for divisor in range(2, n)):
+                total += 1
+            expected[n] = total
+        self.assertEqual(diagnostic.expected_values("primecount", list(expected)), expected)
+        self.assertEqual(expected[1000], 168)
+
 
 class MeasurementTests(unittest.TestCase):
     def setUp(self):

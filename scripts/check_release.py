@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Allow pinned official baselines; reject other submissions and generated artifacts."""
+"""Check benchmark release files and pinned official baselines."""
+import argparse
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
@@ -28,6 +29,9 @@ def allowed(path: str) -> bool:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--worktree", action="store_true", help="Review tracked and new nonignored files before staging.")
+    args = parser.parse_args()
     result = subprocess.run(["git", "ls-files", "--stage", "-z"], cwd=ROOT, capture_output=True, check=True)
     failures = []
     count = 0
@@ -44,8 +48,16 @@ def main() -> int:
     if not count:
         print("No tracked files. Stage the intended release files before this check.", file=sys.stderr)
         return 1
+    if args.worktree:
+        files = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+                               cwd=ROOT, capture_output=True, check=True)
+        blobs = {name: None for name in files.stdout.decode("utf-8").split("\0") if name}
+        failures = [name for name in blobs if not allowed(name) or (ROOT / name).is_symlink()]
+        count = len(blobs)
     # Read staged blobs, so an unstaged worktree edit cannot hide a bad commit.
     def staged(path):
+        if args.worktree:
+            return (ROOT / path).read_bytes()
         return subprocess.run(["git", "cat-file", "blob", blobs[path]], cwd=ROOT,
                               capture_output=True, check=True).stdout
     try:
@@ -61,12 +73,12 @@ def main() -> int:
                 failures.append(f"{path}: missing or does not match its official source hash")
         if "third_party/lean-kernel-challenge/LICENSE" not in blobs:
             failures.append("third_party/lean-kernel-challenge/LICENSE: missing")
-    except (KeyError, ValueError, subprocess.CalledProcessError) as error:
+    except (KeyError, ValueError, TypeError, OSError, ZeroDivisionError, subprocess.CalledProcessError) as error:
         failures.append(f"Cannot verify staged baseline provenance: {error}")
     if failures:
         print("Unexpected tracked publication files:\n" + "\n".join(failures), file=sys.stderr)
         return 1
-    print(f"Checked {count} tracked files, including 8 hash-verified official baselines; no other submission files.")
+    print(f"Checked {count} {'worktree' if args.worktree else 'staged'} files, including 8 hash-verified official baselines.")
     return 0
 
 

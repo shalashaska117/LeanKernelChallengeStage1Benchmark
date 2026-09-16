@@ -39,8 +39,8 @@ def parser() -> argparse.ArgumentParser:
     for name, description in (("compare", "Complete public plan through the upstream local evaluator"),
                               ("diagnostic", "Selected exact-output targets with detailed local measurements")):
         command = commands.add_parser(name, help=description, description=description)
-        command.add_argument("--problem", choices=PROBLEMS if name == "compare" else ("fib", "partition", "mertens"), required=True)
-        command.add_argument("--submission", type=Path, help="Your Submission.lean; omit to benchmark the upstream baseline only")
+        command.add_argument("--problem", choices=PROBLEMS if name == "compare" else ("fib", "partition", "mertens", "primecount"), required=True)
+        command.add_argument("--submission", type=Path, help="Your local Submission.lean; omit to benchmark the upstream baseline only")
         command.add_argument("--baseline", choices=("example", "starter"), default="example")
         command.add_argument("--timeout", type=positive_int, default=120, help="Per-step timeout in seconds, not a total runtime limit (default: 120)")
         command.add_argument("--output", type=Path, help="New output directory; default: results/PROBLEM/TIMESTAMP-ID")
@@ -60,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
             for problem in PROBLEMS:
                 config = ROOT / "benchmarks" / problem / "cases.json"
                 title = json.loads(config.read_text(encoding="utf-8"))["title"] if config.exists() else problem
-                modes = "compare, diagnostic" if problem in ("fib", "partition", "mertens") else "compare"
+                modes = "compare, diagnostic" if problem in ("fib", "partition", "mertens", "primecount") else "compare"
                 print(f"{problem:12} {title:28} {modes}")
             return 0
         if args.command == "setup":
