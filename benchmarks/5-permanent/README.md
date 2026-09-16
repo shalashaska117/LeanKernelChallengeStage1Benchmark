@@ -62,7 +62,27 @@ The default baseline is the bundled [official public example](official/Submissio
 
 This command runs the full canonical local evaluation with one wall-time replay per case. Check both the correctness verdict and full-plan eligibility. An accepted submission can still have failed cases and no computation total.
 
-The optional diagnostic command currently supports `fib`, `partition`, `mertens`, and `primecount`. Use `compare` for this problem.
+## Run diagnostics
+
+Start with the first public local case, dimension 6 and seed 2294488871:
+
+```bash
+python3 benchmark.py diagnostic --problem permanent --inputs 28064292647 \
+  --metric wall-time --repetitions 1
+```
+
+Omit `--inputs` to measure all 15 packed inputs listed in [cases.json](cases.json), in the canonical unseeded sampler's order. This is the public development plan; the competition uses a hidden seed. The default memory watchdog is 8192 MiB. `--memory-mb` overrides it.
+
+For repeated instruction diagnostics:
+
+```bash
+python3 benchmark.py diagnostic --problem permanent \
+  --metric callgrind --repetitions 3 --timeout 600
+```
+
+Add `--submission` to compare a file against the same baseline. `--metric pmu` uses hardware instruction counters when the host permits access. Callgrind and PMU counts are separate metrics. Each report records the packed input, decoded dimension and seed, exact expected output, and individual samples.
+
+Python generates the matrix independently and counts its matchings with subset dynamic programming. Lean then checks that the selected implementation reduces to each exact output. This mode audits exported axioms but does not check the universal correctness theorem; use `compare` for that check. See [methodology](../../docs/methodology.md#diagnostic-runs) for replay boundaries and resource limits.
 
 ## Pinned upstream references
 

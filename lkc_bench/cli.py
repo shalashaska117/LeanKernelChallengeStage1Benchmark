@@ -10,6 +10,7 @@ import sys
 import uuid
 
 from .workspace import ROOT, UPSTREAM, PROBLEMS, BENCHMARK_DIRS, doctor, runtime_environment, setup
+from .diagnostic import DEFAULT_INPUTS, DEFAULT_MEMORY_MB
 
 
 def positive_int(value: str) -> int:
@@ -39,16 +40,17 @@ def parser() -> argparse.ArgumentParser:
     for name, description in (("compare", "Complete public plan through the upstream local evaluator"),
                               ("diagnostic", "Selected exact-output targets with detailed local measurements")):
         command = commands.add_parser(name, help=description, description=description)
-        command.add_argument("--problem", choices=PROBLEMS if name == "compare" else ("fib", "partition", "mertens", "primecount"), required=True)
+        command.add_argument("--problem", choices=PROBLEMS if name == "compare" else tuple(DEFAULT_INPUTS), required=True)
         command.add_argument("--submission", type=Path, help="Your local Submission.lean; omit to benchmark the upstream baseline only")
         command.add_argument("--baseline", choices=("example", "starter"), default="example")
         command.add_argument("--timeout", type=positive_int, default=120, help="Per-step timeout in seconds, not a total runtime limit (default: 120)")
         command.add_argument("--output", type=Path, help="New output directory; default: results/PROBLEM/TIMESTAMP-ID")
         if name == "diagnostic":
             command.add_argument("--metric", choices=("wall-time", "callgrind", "pmu"), default="wall-time")
-            command.add_argument("--inputs", type=natural, nargs="+", help="Exact natural-number inputs; default: six documented endpoints")
+            command.add_argument("--inputs", type=natural, nargs="+", help="Exact natural-number inputs; default: documented endpoints or permanent's 15 public packed cases")
             command.add_argument("--repetitions", type=positive_int, default=3)
-            command.add_argument("--memory-mb", type=positive_int, default=4096)
+            command.add_argument("--memory-mb", type=positive_int,
+                                 help="Process RSS watchdog and Lean allocation limit; default: 8192 for permanent, 4096 otherwise")
     return result
 
 
@@ -60,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
             for problem in PROBLEMS:
                 config = ROOT / "benchmarks" / BENCHMARK_DIRS[problem] / "cases.json"
                 title = json.loads(config.read_text(encoding="utf-8"))["title"] if config.exists() else problem
-                modes = "compare, diagnostic" if problem in ("fib", "partition", "mertens", "primecount") else "compare"
+                modes = "compare, diagnostic" if problem in DEFAULT_INPUTS else "compare"
                 print(f"{BENCHMARK_DIRS[problem]:14} {title:28} {modes}")
             return 0
         if args.command == "setup":
@@ -83,6 +85,8 @@ def main(argv: list[str] | None = None) -> int:
             if args.inputs is None:
                 config = json.loads((ROOT / "benchmarks" / BENCHMARK_DIRS[args.problem] / "cases.json").read_text(encoding="utf-8"))
                 args.inputs = config["diagnostic_inputs"]
+            if args.memory_mb is None:
+                args.memory_mb = DEFAULT_MEMORY_MB[args.problem]
             if len(set(args.inputs)) != len(args.inputs):
                 arguments.error("--inputs must not contain duplicates")
         environment = doctor(args.problem, getattr(args, "metric", "wall-time"))

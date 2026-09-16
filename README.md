@@ -42,7 +42,7 @@ The numbered folders follow the order below. Use the ID column with `--problem`.
 | [Integer partitions](benchmarks/2-partition/README.md) | `partition` | [Submission.lean](benchmarks/2-partition/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
 | [Mertens function](benchmarks/3-mertens/README.md) | `mertens` | [Submission.lean](benchmarks/3-mertens/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
 | [Prime counting](benchmarks/4-primecount/README.md) | `primecount` | [Submission.lean](benchmarks/4-primecount/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
-| [Matrix permanent](benchmarks/5-permanent/README.md) | `permanent` | [Submission.lean](benchmarks/5-permanent/official/Submission.lean) | Available | Planned |
+| [Matrix permanent](benchmarks/5-permanent/README.md) | `permanent` | [Submission.lean](benchmarks/5-permanent/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
 | [Rule 110](benchmarks/6-ca-rule110/README.md) | `ca-rule110` | [Submission.lean](benchmarks/6-ca-rule110/official/Submission.lean) | Available | Planned |
 | [SHA-256](benchmarks/7-sha256/README.md) | `sha256` | [Submission.lean](benchmarks/7-sha256/official/Submission.lean) | Available | Planned |
 | [Polynomial discriminant](benchmarks/8-polydisc/README.md) | `polydisc` | [Submission.lean](benchmarks/8-polydisc/official/Submission.lean) | Available | Planned |
@@ -68,7 +68,9 @@ These descriptions refer to the naive specification. Each problem guide explains
 
 `compare` calls the upstream local evaluator separately for the baseline and your file. It checks the interface, universal proof, and axioms, then attempts the complete unseeded public plan with one wall-time measurement per case. Read the completion result as well as acceptance: an accepted submission can have failed or unattempted cases. Full runs can take a long time, and a baseline can exceed the limits.
 
-`diagnostic` prepares exact-output targets for selected Fibonacci, partition, Mertens, or prime-counting inputs and measures kernel target replay. It keeps individual samples, export hashes, step logs, and per-case failures. It checks the selected output equalities and exported axioms; it does not verify the universal correctness theorem.
+`diagnostic` prepares exact-output targets for selected Fibonacci, partition, Mertens, prime-counting, or matrix-permanent inputs and measures kernel target replay. It keeps individual samples, export hashes, step logs, and per-case failures. It checks the selected output equalities and exported axioms; it does not verify the universal correctness theorem.
+
+Matrix-permanent inputs pack a dimension and seed as `(dimension << 32) | seed`. Its default diagnostic uses all 15 cases from the pinned evaluator's unseeded local plan and an 8192 MiB memory watchdog. Other diagnostic problems use six documented endpoints and a 4096 MiB watchdog. Override these defaults with `--inputs` and `--memory-mb`; see the [permanent guide](benchmarks/5-permanent/README.md#run-diagnostics) for an example.
 
 ```bash
 # Repeated kernel wall-time measurements on selected inputs.

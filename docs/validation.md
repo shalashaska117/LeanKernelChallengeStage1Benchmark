@@ -39,3 +39,21 @@ python3 benchmark.py diagnostic --problem primecount --inputs 0 1 2 \
 All three exact-output targets compiled, passed the export axiom audit, and completed one kernel replay each. This checks the added diagnostic branch against the unchanged official example.
 
 The smoke check reused prepared dependencies with matching package pins and artifact hashes, including `Spec`, on WSL's native filesystem. It did not repeat a fresh setup. Earlier attempts using mounted dependency paths reached the per-process timeout during dependency loading; those reports remain incomplete. The timeout includes environment preparation and dependency loading, while the reported replay metric measures only the target replay. After the successful run, the temporary native cache links were restored to durable paths.
+
+## Matrix-permanent diagnostics
+
+The Python suite checks the subset-DP answers against exhaustive permutations for dimensions 0 through 7 with four seeds, including 0 and 0xffffffff. It also checks all 15 public-plan answers, the packed `Nat` target, and propagation of default and overridden CLI limits into the run manifest.
+
+The independent generator and answers were compared with the pinned official reference on 51 inputs: all 15 local public cases and dimensions 0 through 8 with seeds 0, 1, 0x12345678 and 0xffffffff. The 15 default inputs match the original evaluator's unseeded sampler. All eight bundled official source hashes still match the lock.
+
+The 61-test suite passes on WSL. On native Windows, 60 tests pass and the POSIX process-group test is skipped.
+
+The public CLI completed a wall-time smoke check against the bundled official example:
+
+```bash
+python3 benchmark.py diagnostic --problem permanent \
+  --inputs 0 4294967296 8589934592 12884901888 28064292647 \
+  --repetitions 1 --output results/permanent-public-smoke
+```
+
+All five targets compiled, passed the export axiom audit, and completed one kernel replay each. Their outputs were 1, 1, 2, 6 and 8. The run used the default 8192 MiB watchdog, the existing pinned tools, and a freshly built permanent `Spec` in the managed cache. It checks dimensions 0, 1, 2, 3 and one public dimension-6 instance.

@@ -24,7 +24,9 @@ The measured computation interval is the target declaration's kernel replay. Pro
 
 ## Diagnostic runs
 
-`python3 benchmark.py diagnostic` supports `fib`, `partition`, `mertens`, and `primecount`. By default it uses the six public range endpoints listed in each problem's `cases.json`. The `--inputs` option selects an explicit custom set. Prime-counting expected answers use an independent Python sieve of Eratosthenes.
+`python3 benchmark.py diagnostic` supports `fib`, `partition`, `mertens`, `primecount`, and `permanent`. For the first four problems it uses the six public range endpoints listed in each problem's `cases.json`. For `permanent` it uses the 15 packed inputs from the pinned evaluator's unseeded local plan, with five cases each at dimensions 6, 12 and 16. The `--inputs` option selects an explicit custom set.
+
+Prime-counting expected answers use an independent Python sieve of Eratosthenes. Matrix-permanent answers use a Python matrix generator and subset dynamic programming. Each state records occupied columns and the number of partial row assignments; each layer adds one row. The packed input is decoded before allocating states, so the matrix dimension determines the computation's size. Reports include the decoded dimension and 32-bit seed.
 
 Diagnostic runs check selected exact-output cases and audit the exported axioms. They do not run the canonical universal-proof comparator or establish full-plan eligibility. A case can succeed even when the submitted `impl_correct` declaration would fail canonical verification. Use `compare` for that check.
 
@@ -46,7 +48,7 @@ Callgrind counts and PMU counts come from different mechanisms and are separate 
 
 Reports retain the raw timer record for each successful sample, process metadata, and log hashes. Per-case ratios require complete measurements for both entries at the same input. These details make it possible to inspect variation and preparation failures without treating missing samples as zero.
 
-`--timeout` bounds each whole compile, export, audit, or replay process, including any preparation outside the measured window. `--memory-mb` supplies Lean's compilation memory setting and a process-tree RSS watchdog sampled every 100 ms. RSS polling can miss short spikes and count shared pages more than once. These controls do not reproduce the official cgroup memory policy or provide a sandbox. A timeout has no instruction count.
+`--timeout` bounds each whole compile, export, audit, or replay process, including any preparation outside the measured window. `--memory-mb` supplies Lean's compilation memory setting and a process-tree RSS watchdog sampled every 100 ms; it defaults to 8192 MiB for `permanent` and 4096 MiB for other diagnostic problems. RSS polling can miss short spikes and count shared pages more than once. These controls do not reproduce the official cgroup memory policy or provide a sandbox. A timeout has no instruction count.
 
 ## Public groups and hidden cases
 

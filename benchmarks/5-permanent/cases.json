@@ -9,7 +9,24 @@
   "canonical_config": "evaluation/problems/permanent/config.json",
   "input_encoding": "packed-v1: (dimension << 32) | seed",
   "memory_mb": 8192,
-  "diagnostic_inputs": null,
+  "diagnostic_inputs": [
+    28064292647,
+    26230790088,
+    26754739663,
+    28361232070,
+    29556043951,
+    53794586207,
+    54079857374,
+    54224806958,
+    51875434732,
+    54751654040,
+    71077100717,
+    72835838140,
+    72703668916,
+    70268834944,
+    69508517010
+  ],
+  "diagnostic_input_schedule": "Pinned canonical sampler with an empty local seed; five cases per group in sampler order",
   "groups": [
     {
       "id": "R1",

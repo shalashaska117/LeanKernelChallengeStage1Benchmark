@@ -1,4 +1,4 @@
-"""Run local exact-output kernel diagnostics for fib, partition, mertens and primecount.
+"""Run local exact-output kernel diagnostics for the supported benchmark problems.
 
 The runner compiles an upstream baseline and, optionally, a supplied submission.
 For each input it creates a direct Eq.refl target, exports its dependency closure,
@@ -34,7 +34,13 @@ DEFAULT_INPUTS = {
     "partition": [14, 18, 22, 26, 32, 36],
     "mertens": [25, 50, 80, 150, 300, 500],
     "primecount": [50, 100, 150, 300, 600, 1000],
+    "permanent": [
+        28064292647, 26230790088, 26754739663, 28361232070, 29556043951,
+        53794586207, 54079857374, 54224806958, 51875434732, 54751654040,
+        71077100717, 72835838140, 72703668916, 70268834944, 69508517010,
+    ],
 }
+DEFAULT_MEMORY_MB = {problem: 8192 if problem == "permanent" else 4096 for problem in DEFAULT_INPUTS}
 TARGET_ENCODING = "direct-rfl-v1-experimental"
 MEASUREMENT_CONTRACT = "kernel-replay-v2"
 REPLAY_BOUNDARY = "target-declaration-replay-v1"
@@ -55,10 +61,51 @@ def _sha(path: Path) -> str:
     return digest.hexdigest()
 
 
+def permanent_columns(dimension: int, seed: int) -> list[list[int]]:
+    """Generate the enabled columns, using explicit exclusion lists for each row."""
+    mask32 = (1 << 32) - 1
+
+    def mix(value: int) -> int:
+        value = ((value ^ (value >> 16)) * 0x7feb352d) & mask32
+        value = ((value ^ (value >> 15)) * 0x846ca68b) & mask32
+        return (value ^ (value >> 16)) & mask32
+
+    rows = []
+    for row in range(dimension):
+        if dimension < 3:
+            rows.append(list(range(dimension)))
+            continue
+        key = seed ^ (row * 0x9e3779b9)
+        available = [column for column in range(dimension) if column != row]
+        first = available[mix(key ^ 0x85ebca6b) % (dimension - 1)]
+        available.remove(first)
+        second = available[mix(key ^ 0xc2b2ae35) % (dimension - 2)]
+        rows.append([row, first, second])
+    return rows
+
+
+def permanent_value(n: int) -> int:
+    """Count injective row choices with one dynamic-programming layer per row."""
+    dimension, seed = n >> 32, n & 0xffffffff
+    states = {0: 1}
+    for columns in permanent_columns(dimension, seed):
+        following = {}
+        for used, count in states.items():
+            for column in columns:
+                bit = 1 << column
+                if not used & bit:
+                    target = used | bit
+                    following[target] = following.get(target, 0) + count
+        states = following
+    return states.get((1 << dimension) - 1, 0)
+
+
 def expected_values(problem: str, inputs: list[int]) -> dict[int, int]:
     """Compute integer test answers without invoking the submitted Lean code."""
     if not inputs or any(isinstance(n, bool) or not isinstance(n, int) or n < 0 for n in inputs):
         raise ValueError("Inputs must be a nonempty list of natural numbers.")
+    if problem == "permanent":
+        return {n: permanent_value(n) for n in inputs}
     if problem == "fib":
         answers = {}
         for n in inputs:
@@ -289,13 +336,14 @@ def _summarize(report: dict) -> None:
 
 
 def _write_markdown(output: Path, report: dict) -> None:
+    input_label = "Packed input (dimension, seed)" if report["problem"] == "permanent" else "Input"
     lines = [
         f"# {report['problem']} local diagnostic", "",
         f"Metric: `{report['metric']}`. Repetitions per input: {report['repetitions']}. "
         f"All requested measurements completed: {'yes' if report['complete'] else 'no'}.", "",
         "These results check selected exact outputs. Universal correctness and submission eligibility "
         "were not checked. This is not an official score or a complete hosted evaluation plan.", "",
-        "| Role | Input | Status | Raw samples | Median | Unit |",
+        f"| Role | {input_label} | Status | Raw samples | Median | Unit |",
         "| --- | ---: | --- | --- | ---: | --- |",
     ]
     for run in report["runs"]:
@@ -303,7 +351,9 @@ def _write_markdown(output: Path, report: dict) -> None:
             samples = ", ".join(str(sample["value"]) for sample in case["samples"] if sample.get("status") == "complete") or "n/a"
             median = str(case["median"]) if case.get("median") is not None else "n/a"
             status = case["status"] + (f" ({case['failure_phase']})" if case.get("failure_phase") else "")
-            lines.append(f"| {run['role']} | {case['n']} | {status} | {samples} | {median} | {report['unit']} |")
+            shown_input = (f"{case['n']} ({case['dimension']}, {case['seed']})"
+                           if report["problem"] == "permanent" else str(case["n"]))
+            lines.append(f"| {run['role']} | {shown_input} | {status} | {samples} | {median} | {report['unit']} |")
     if report["comparisons"]:
         lines += ["", "| Input | Baseline / candidate | Candidate reduction |", "| ---: | ---: | ---: |"]
         for row in report["comparisons"]:
@@ -329,6 +379,8 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
         raise ValueError("Measured diagnostics require Linux or WSL with procfs.")
     if args.problem not in DEFAULT_INPUTS or args.metric not in METRICS:
         raise ValueError("Unsupported diagnostic problem or metric.")
+    if args.memory_mb is None:
+        args.memory_mb = DEFAULT_MEMORY_MB[args.problem]
     if args.baseline not in ("example", "starter"):
         raise ValueError("Baseline must be example or starter.")
     if args.repetitions < 1 or not math.isfinite(args.timeout) or args.timeout <= 0 or args.memory_mb <= 0:
@@ -381,6 +433,9 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
                         "The timeout covers one whole tool process, including any untimed preparation.",
                         "RSS sampling is an approximate watchdog, not an enforced container memory limit."],
     }
+    if args.problem == "permanent":
+        report["input_encoding"] = "packed-v1: (dimension << 32) | seed"
+        report["expected_output_method"] = "Independent Python matrix generator and subset dynamic programming"
     for tool in ("lean", "lake", *(["valgrind"] if args.metric == "callgrind" else [])):
         step = _step([tool, "--version"], cwd=package, env=env, log=output / f"{tool}-version.log",
                      root=output, timeout=args.timeout, memory_mb=args.memory_mb)
@@ -404,6 +459,9 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
                   "source_artifact": copied.relative_to(output).as_posix(),
                   "cases": [{"n": n, "expected": str(values[n]), "target": targets[n],
                              "status": "pending", "samples": [], "median": None} for n in inputs]}
+        if args.problem == "permanent":
+            for case in record["cases"]:
+                case.update(dimension=case["n"] >> 32, seed=case["n"] & 0xffffffff)
         report["runs"].append(record)
         local_env = dict(env)
         local_env["LEAN_PATH"] = str(work) + (os.pathsep + lean_path if lean_path else "")

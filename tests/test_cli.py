@@ -1,9 +1,14 @@
 import argparse
 import importlib.util
+import io
+import json
 from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import patch
 
-from lkc_bench.cli import natural, parser, positive_int
+from lkc_bench.cli import main, natural, parser, positive_int
+from lkc_bench.diagnostic import DEFAULT_INPUTS
 from lkc_bench.workspace import ROOT, PROBLEMS, lock
 
 
@@ -31,6 +36,25 @@ class CliTests(unittest.TestCase):
         args = parser().parse_args(["diagnostic", "--problem", "primecount"])
         self.assertEqual(args.problem, "primecount")
         self.assertIsNone(args.submission)
+
+    def test_diagnostic_default_memory_inputs_and_explicit_overrides_reach_the_runner(self):
+        for problem, options, memory, inputs in (
+            ("permanent", [], 8192, DEFAULT_INPUTS["permanent"]),
+            ("partition", [], 4096, DEFAULT_INPUTS["partition"]),
+            ("permanent", ["--memory-mb", "3072", "--inputs", "17179869186"], 3072, [17179869186]),
+        ):
+            with self.subTest(problem=problem, options=options), tempfile.TemporaryDirectory() as temporary:
+                output = Path(temporary) / "run"
+                with patch("lkc_bench.cli.sys.platform", "linux"), patch("lkc_bench.cli.runtime_environment"), \
+                        patch("lkc_bench.cli.doctor", return_value={}), patch("sys.stdout", new_callable=io.StringIO), \
+                        patch("lkc_bench.diagnostic.run_diagnostic", return_value={"complete": True}) as run:
+                    status = main(["diagnostic", "--problem", problem, "--output", str(output), *options])
+                self.assertEqual(status, 0)
+                self.assertEqual(run.call_args.args[0].memory_mb, memory)
+                self.assertEqual(run.call_args.args[0].inputs, inputs)
+                manifest = json.loads((output / "run.json").read_text())
+                self.assertEqual(manifest["options"]["memory_mb"], memory)
+                self.assertEqual(manifest["options"]["inputs"], inputs)
 
     def test_lock_has_full_revisions(self):
         for field in ("revision", "comparator_revision", "lean4export_revision"):

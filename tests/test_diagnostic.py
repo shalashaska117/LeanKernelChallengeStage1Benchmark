@@ -1,11 +1,15 @@
 """Check independent answers, measurement contracts and incomplete comparisons."""
 
+import hashlib
+import hmac
+import itertools
 import json
 from pathlib import Path
 import tempfile
 import unittest
 
 from lkc_bench import diagnostic
+from lkc_bench.workspace import BENCHMARK_DIRS, ROOT
 
 
 class ExpectedOutputTests(unittest.TestCase):
@@ -30,9 +34,10 @@ class ExpectedOutputTests(unittest.TestCase):
         self.assertEqual(diagnostic.expected_values("mertens", list(expected)), expected)
 
     def test_invalid_inputs_fail(self):
-        for inputs in ([], [-1], [True], [1.5]):
-            with self.subTest(inputs=inputs), self.assertRaises(ValueError):
-                diagnostic.expected_values("fib", inputs)
+        for problem in ("fib", "permanent"):
+            for inputs in ([], [-1], [True], [1.5]):
+                with self.subTest(problem=problem, inputs=inputs), self.assertRaises(ValueError):
+                    diagnostic.expected_values(problem, inputs)
 
     def test_primecount_matches_trial_division_including_zero_and_one(self):
         total, expected = 0, {}
@@ -42,6 +47,60 @@ class ExpectedOutputTests(unittest.TestCase):
             expected[n] = total
         self.assertEqual(diagnostic.expected_values("primecount", list(expected)), expected)
         self.assertEqual(expected[1000], 168)
+
+    def test_permanent_matches_exhaustive_permutations(self):
+        inputs, expected = [], {}
+        for dimension in range(8):
+            for seed in (0, 1, 0x12345678, 0xffffffff):
+                n = (dimension << 32) | seed
+                columns = diagnostic.permanent_columns(dimension, seed)
+                if dimension >= 3:
+                    for row, allowed in enumerate(columns):
+                        self.assertEqual(len(set(allowed)), 3)
+                        self.assertIn(row, allowed)
+                        self.assertTrue(all(0 <= column < dimension for column in allowed))
+                expected[n] = sum(all(column in columns[row] for row, column in enumerate(permutation))
+                                  for permutation in itertools.permutations(range(dimension)))
+                inputs.append(n)
+        self.assertEqual(diagnostic.expected_values("permanent", inputs), expected)
+
+    def test_permanent_public_plan_exact_answers(self):
+        values = [8, 20, 18, 8, 12, 53, 78, 70, 94, 52, 165, 429, 140, 195, 93]
+        inputs = diagnostic.DEFAULT_INPUTS["permanent"]
+        self.assertEqual(len(inputs), 15)
+        self.assertEqual(diagnostic.expected_values("permanent", inputs), dict(zip(inputs, values)))
+        self.assertEqual(diagnostic.expected_values("permanent", [0, 4294967295, 8589934591, 12884901887,
+                                                                  17179869183, 17179869186]),
+                         {0: 1, 4294967295: 1, 8589934591: 1, 12884901887: 2, 17179869183: 6, 17179869186: 8})
+
+    def test_manifest_inputs_match_diagnostic_defaults_and_public_packed_sampler(self):
+        for problem, inputs in diagnostic.DEFAULT_INPUTS.items():
+            manifest = json.loads((ROOT / "benchmarks" / BENCHMARK_DIRS[problem] / "cases.json").read_text())
+            self.assertEqual(manifest["diagnostic_inputs"], inputs)
+        manifest = json.loads((ROOT / "benchmarks/5-permanent/cases.json").read_text())
+        sampled = []
+        for group in manifest["groups"]:
+            policy, seen = group["sampling"], set()
+            for case in range(policy["count"]):
+                attempt = 0
+                while True:
+                    message = json.dumps(["permanent", group["id"], case, "packed-seed", attempt],
+                                         separators=(",", ":")).encode()
+                    seed = int.from_bytes(hmac.new(b"", b"lean-kernel-challenge/grouped-evaluation-sample-v1\0"
+                                                  + message, hashlib.sha256).digest()[:4], "big")
+                    attempt += 1
+                    if seed not in seen:
+                        seen.add(seed)
+                        break
+                sampled.append((policy["scale"] << policy["seed_bits"]) | seed)
+        self.assertEqual(sampled, diagnostic.DEFAULT_INPUTS["permanent"])
+        self.assertEqual(manifest["memory_mb"], diagnostic.DEFAULT_MEMORY_MB["permanent"])
+
+    def test_permanent_target_preserves_the_packed_nat_literal(self):
+        source = diagnostic.target_source(71077100717, 165, "Test.permanent", "Nat")
+        self.assertIn("Lean.mkNatLit 71077100717", source)
+        self.assertIn("let rhs := Lean.mkNatLit 165", source)
+        self.assertIn("let pf ← mkEqRefl rhs", source)
 
 
 class MeasurementTests(unittest.TestCase):

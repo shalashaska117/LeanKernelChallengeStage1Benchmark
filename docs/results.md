@@ -24,7 +24,7 @@ The wrapper compares complete runs only when their problem, case identities, met
 
 The diagnostic target checks that `Submission.impl n` reduces to an independently calculated exact output. It does not check the statement or completeness of `Submission.impl_correct`. A successful diagnostic run needs a separate full evaluator run before it can support a claim about submission acceptance.
 
-The default inputs are the six published group endpoints for the four supported diagnostic problems. Custom `--inputs` can test boundaries or small examples. They do not replace an official seeded plan. Diagnostic totals, where shown, refer only to the requested inputs.
+The default inputs are six published group endpoints for Fibonacci, partitions, Mertens and prime counting, or all 15 unseeded local packed cases for matrix permanent. Permanent reports include the dimension and seed alongside each input. Custom `--inputs` can test boundaries or small examples. They do not replace an official seeded plan. Diagnostic totals, where shown, refer only to the requested inputs.
 
 ## Ratios
 
