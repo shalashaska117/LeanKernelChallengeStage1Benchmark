@@ -39,7 +39,7 @@ python3 benchmark.py setup --problem fib --problem mertens
 python3 benchmark.py setup
 ```
 
-The official examples are already included in `benchmarks/<problem>/official/Submission.lean`. You can read them without running setup. They import the problem's fixed `Spec`; use the benchmark commands to run them with the correct environment.
+The official examples are already included in `benchmarks/<number>-<problem>/official/Submission.lean`. You can read them without running setup. They import the problem's fixed `Spec`; use the benchmark commands to run them with the correct environment.
 
 `setup --fetch-only` downloads the fixed upstream source without compiling it. It is useful for inspecting the specification, starter, evaluator, and rules, but does not prepare a runnable benchmark.
 

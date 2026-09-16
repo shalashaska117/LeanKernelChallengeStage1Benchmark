@@ -62,7 +62,7 @@ class WorkspaceTests(unittest.TestCase):
                     "path": relative, "sha256": hashlib.sha256(data).hexdigest(),
                 }
                 if role == "example":
-                    bundled = f"benchmarks/{problem}/official/Submission.lean"
+                    bundled = f"benchmarks/{workspace.BENCHMARK_DIRS[problem]}/official/Submission.lean"
                     self.references["baselines"][problem][role]["bundled_path"] = bundled
                     destination = self.root / bundled
                     destination.parent.mkdir(parents=True)
@@ -169,7 +169,7 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(local_file.read_text(), "Preserve this file.\n")
 
     def test_bundled_example_is_checked_and_selected_without_a_cache(self):
-        expected = self.root / "benchmarks/partition/official/Submission.lean"
+        expected = self.root / "benchmarks/2-partition/official/Submission.lean"
         self.assertFalse(self.upstream.exists())
         self.assertEqual(workspace.official_baseline("partition"), expected)
         expected.write_bytes(b"unapproved replacement\n")

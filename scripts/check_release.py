@@ -8,10 +8,13 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from lkc_bench.workspace import BENCHMARK_DIRS
+
 ROOT_FILES = {".gitignore", ".gitattributes", "README.md", "CONTRIBUTING.md", "LICENSE", "NOTICE.md",
               "benchmark.py", "upstream.lock.json", "baselines.lock.json"}
-PROBLEMS = ("fib", "partition", "mertens", "primecount", "permanent", "ca-rule110", "sha256", "polydisc")
-OFFICIAL_BASELINES = {f"benchmarks/{problem}/official/Submission.lean": problem for problem in PROBLEMS}
+OFFICIAL_BASELINES = {f"benchmarks/{folder}/official/Submission.lean": problem
+                      for problem, folder in BENCHMARK_DIRS.items()}
 
 
 def allowed(path: str) -> bool:
@@ -25,6 +28,7 @@ def allowed(path: str) -> bool:
     if len(item.parts) == 2 and item.parts[0] == "docs" and item.suffix == ".md":
         return True
     return (len(item.parts) == 3 and item.parts[0] == "benchmarks"
+            and item.parts[1] in BENCHMARK_DIRS.values()
             and item.name in ("README.md", "cases.json"))
 
 

@@ -5,7 +5,7 @@
       "example": {
         "path": "examples/fib/Submission.lean",
         "sha256": "d7a034fabb9857265ca22cf67a575cd8bf26308deee9ff736af5f435f90ada4f",
-        "bundled_path": "benchmarks/fib/official/Submission.lean"
+        "bundled_path": "benchmarks/1-fib/official/Submission.lean"
       },
       "starter": {
         "path": "problems/fib/Submission.lean",
@@ -16,7 +16,7 @@
       "example": {
         "path": "examples/partition/Submission.lean",
         "sha256": "db37ad6f10a67da0ade5ca30efd4c304154551d5e324ac6de11f1ec3be435528",
-        "bundled_path": "benchmarks/partition/official/Submission.lean"
+        "bundled_path": "benchmarks/2-partition/official/Submission.lean"
       },
       "starter": {
         "path": "problems/partition/Submission.lean",
@@ -27,7 +27,7 @@
       "example": {
         "path": "examples/mertens/Submission.lean",
         "sha256": "8e2890506e0449cdfecdb5f9f4c41ad7cc856c8c9dd8258ac6314aa069976dee",
-        "bundled_path": "benchmarks/mertens/official/Submission.lean"
+        "bundled_path": "benchmarks/3-mertens/official/Submission.lean"
       },
       "starter": {
         "path": "problems/mertens/Submission.lean",
@@ -38,7 +38,7 @@
       "example": {
         "path": "examples/primecount/Submission.lean",
         "sha256": "614ab91f6707e78d99f5e8db0ad01cae1a2a6a1d9c74761431ed1d9083fd02e6",
-        "bundled_path": "benchmarks/primecount/official/Submission.lean"
+        "bundled_path": "benchmarks/4-primecount/official/Submission.lean"
       },
       "starter": {
         "path": "problems/primecount/Submission.lean",
@@ -49,7 +49,7 @@
       "example": {
         "path": "examples/permanent/Submission.lean",
         "sha256": "6119f93fbf17b6a347191316ca842827afbbf34a88c18948b77ae1b684457f9e",
-        "bundled_path": "benchmarks/permanent/official/Submission.lean"
+        "bundled_path": "benchmarks/5-permanent/official/Submission.lean"
       },
       "starter": {
         "path": "problems/permanent/Submission.lean",
@@ -60,7 +60,7 @@
       "example": {
         "path": "examples/ca-rule110/Submission.lean",
         "sha256": "9bf1304e278231877f63859bf8cd2f65b1f70039d292539273d83ce425e6afa2",
-        "bundled_path": "benchmarks/ca-rule110/official/Submission.lean"
+        "bundled_path": "benchmarks/6-ca-rule110/official/Submission.lean"
       },
       "starter": {
         "path": "problems/ca-rule110/Submission.lean",
@@ -71,7 +71,7 @@
       "example": {
         "path": "examples/sha256/Submission.lean",
         "sha256": "373986685cddd293c4a09b87ba713a84269a349e714fb99574bd9cc5c677f69e",
-        "bundled_path": "benchmarks/sha256/official/Submission.lean"
+        "bundled_path": "benchmarks/7-sha256/official/Submission.lean"
       },
       "starter": {
         "path": "problems/sha256/Submission.lean",
@@ -82,7 +82,7 @@
       "example": {
         "path": "examples/polydisc/Submission.lean",
         "sha256": "8cf361a14699c741916e8664320937867a78320053cc49ce79da3920b6a4768e",
-        "bundled_path": "benchmarks/polydisc/official/Submission.lean"
+        "bundled_path": "benchmarks/8-polydisc/official/Submission.lean"
       },
       "starter": {
         "path": "problems/polydisc/Submission.lean",

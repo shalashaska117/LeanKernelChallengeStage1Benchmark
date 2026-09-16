@@ -2,7 +2,7 @@
 
 Local benchmarks for testing your Lean Kernel Challenge submission against the public upstream baseline for the same problem. Each problem has a guide with its rules, input format, test groups, and limits.
 
-The eight official public examples are included in `benchmarks/<problem>/official/Submission.lean` and linked below. They are unchanged copies of `examples/<problem>/Submission.lean` from the [organizers' pinned repository](https://github.com/SAIRcompetition/lean-kernel-challenge/tree/eb5e8850cdec9acf52d615529f9d1d64894e44b9). The default baseline uses this bundled source and verifies its SHA-256 against [baselines.lock.json](baselines.lock.json). `--baseline starter` selects the participant starter downloaded from the same revision. These references do not claim to be the fastest submissions on the website.
+The eight official public examples are included in `benchmarks/<number>-<problem>/official/Submission.lean` and linked below. They are unchanged copies of `examples/<problem>/Submission.lean` from the [organizers' pinned repository](https://github.com/SAIRcompetition/lean-kernel-challenge/tree/eb5e8850cdec9acf52d615529f9d1d64894e44b9). The default baseline uses this bundled source and verifies its SHA-256 against [baselines.lock.json](baselines.lock.json). `--baseline starter` selects the participant starter downloaded from the same revision. These references do not claim to be the fastest submissions on the website.
 
 This repository contains benchmark tools, documentation, and the eight official public baselines. Use `--submission` to test a Lean file against the corresponding baseline.
 
@@ -34,16 +34,18 @@ Omit `--submission` to measure only the baseline. The file must use the problem'
 
 ## Problems
 
+The numbered folders follow the order below. Use the ID column with `--problem`.
+
 | Problem | ID | Official Lean source | Full public comparison | Detailed diagnostics |
 | --- | --- | --- | --- | --- |
-| [Fibonacci](benchmarks/fib/README.md) | `fib` | [Submission.lean](benchmarks/fib/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
-| [Integer partitions](benchmarks/partition/README.md) | `partition` | [Submission.lean](benchmarks/partition/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
-| [Mertens function](benchmarks/mertens/README.md) | `mertens` | [Submission.lean](benchmarks/mertens/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
-| [Prime counting](benchmarks/primecount/README.md) | `primecount` | [Submission.lean](benchmarks/primecount/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
-| [Matrix permanent](benchmarks/permanent/README.md) | `permanent` | [Submission.lean](benchmarks/permanent/official/Submission.lean) | Available | Planned |
-| [Rule 110](benchmarks/ca-rule110/README.md) | `ca-rule110` | [Submission.lean](benchmarks/ca-rule110/official/Submission.lean) | Available | Planned |
-| [SHA-256](benchmarks/sha256/README.md) | `sha256` | [Submission.lean](benchmarks/sha256/official/Submission.lean) | Available | Planned |
-| [Polynomial discriminant](benchmarks/polydisc/README.md) | `polydisc` | [Submission.lean](benchmarks/polydisc/official/Submission.lean) | Available | Planned |
+| [Fibonacci](benchmarks/1-fib/README.md) | `fib` | [Submission.lean](benchmarks/1-fib/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
+| [Integer partitions](benchmarks/2-partition/README.md) | `partition` | [Submission.lean](benchmarks/2-partition/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
+| [Mertens function](benchmarks/3-mertens/README.md) | `mertens` | [Submission.lean](benchmarks/3-mertens/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
+| [Prime counting](benchmarks/4-primecount/README.md) | `primecount` | [Submission.lean](benchmarks/4-primecount/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
+| [Matrix permanent](benchmarks/5-permanent/README.md) | `permanent` | [Submission.lean](benchmarks/5-permanent/official/Submission.lean) | Available | Planned |
+| [Rule 110](benchmarks/6-ca-rule110/README.md) | `ca-rule110` | [Submission.lean](benchmarks/6-ca-rule110/official/Submission.lean) | Available | Planned |
+| [SHA-256](benchmarks/7-sha256/README.md) | `sha256` | [Submission.lean](benchmarks/7-sha256/official/Submission.lean) | Available | Planned |
+| [Polynomial discriminant](benchmarks/8-polydisc/README.md) | `polydisc` | [Submission.lean](benchmarks/8-polydisc/official/Submission.lean) | Available | Planned |
 
 `python3 benchmark.py list` lists the supported modes. Guides and `cases.json` files are separate for each problem. The pinned upstream evaluator determines the full comparison plan; diagnostic inputs are an explicit local selection.
 

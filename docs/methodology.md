@@ -6,7 +6,7 @@ Two commands answer different questions. `compare` runs the upstream correctness
 
 `python3 benchmark.py compare` evaluates the selected upstream baseline and an optional supplied `Submission.lean` with the pinned canonical local evaluator. Only that submission file is passed as contestant input. The fixed evaluation package supplies the specification and dependencies.
 
-The default example is read from `benchmarks/<problem>/official/Submission.lean`, an unchanged copy of the pinned official public source. The runner verifies its SHA-256 against `baselines.lock.json`. The optional starter comes from the cached pinned upstream checkout and is checked against its own hash. The same baseline selection applies to diagnostics.
+The default example is read from `benchmarks/<number>-<problem>/official/Submission.lean`, an unchanged copy of the pinned official public source. The runner verifies its SHA-256 against `baselines.lock.json`. The optional starter comes from the cached pinned upstream checkout and is checked against its own hash. The same baseline selection applies to diagnostics.
 
 The upstream pipeline:
 

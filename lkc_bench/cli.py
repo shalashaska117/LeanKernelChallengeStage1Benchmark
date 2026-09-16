@@ -9,7 +9,7 @@ import subprocess
 import sys
 import uuid
 
-from .workspace import ROOT, UPSTREAM, PROBLEMS, doctor, runtime_environment, setup
+from .workspace import ROOT, UPSTREAM, PROBLEMS, BENCHMARK_DIRS, doctor, runtime_environment, setup
 
 
 def positive_int(value: str) -> int:
@@ -58,10 +58,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "list":
             for problem in PROBLEMS:
-                config = ROOT / "benchmarks" / problem / "cases.json"
+                config = ROOT / "benchmarks" / BENCHMARK_DIRS[problem] / "cases.json"
                 title = json.loads(config.read_text(encoding="utf-8"))["title"] if config.exists() else problem
                 modes = "compare, diagnostic" if problem in ("fib", "partition", "mertens", "primecount") else "compare"
-                print(f"{problem:12} {title:28} {modes}")
+                print(f"{BENCHMARK_DIRS[problem]:14} {title:28} {modes}")
             return 0
         if args.command == "setup":
             setup(list(dict.fromkeys(args.problem or PROBLEMS)), args.fetch_only)
@@ -81,7 +81,7 @@ def main(argv: list[str] | None = None) -> int:
             if sys.platform != "linux":
                 arguments.error("diagnostic measurements require Linux or WSL")
             if args.inputs is None:
-                config = json.loads((ROOT / "benchmarks" / args.problem / "cases.json").read_text(encoding="utf-8"))
+                config = json.loads((ROOT / "benchmarks" / BENCHMARK_DIRS[args.problem] / "cases.json").read_text(encoding="utf-8"))
                 args.inputs = config["diagnostic_inputs"]
             if len(set(args.inputs)) != len(args.inputs):
                 arguments.error("--inputs must not contain duplicates")

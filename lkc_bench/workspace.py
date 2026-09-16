@@ -13,6 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 PROBLEMS = ("fib", "partition", "mertens", "primecount", "permanent", "ca-rule110", "sha256", "polydisc")
+BENCHMARK_DIRS = {problem: f"{number}-{problem}" for number, problem in enumerate(PROBLEMS, start=1)}
 CACHE = ROOT / ".cache"
 UPSTREAM = CACHE / "upstream"
 TOOLS = CACHE / "repro"
@@ -45,7 +46,7 @@ def official_baseline(problem: str) -> Path:
     if references["upstream_revision"] != lock()["revision"]:
         raise RuntimeError("Baseline hashes refer to a different upstream revision.")
     record = references["baselines"][problem]["example"]
-    relative = f"benchmarks/{problem}/official/Submission.lean"
+    relative = f"benchmarks/{BENCHMARK_DIRS[problem]}/official/Submission.lean"
     source = ROOT / relative
     if (record.get("bundled_path") != relative or source.is_symlink()
             or not source.resolve().is_relative_to(ROOT) or not source.is_file()

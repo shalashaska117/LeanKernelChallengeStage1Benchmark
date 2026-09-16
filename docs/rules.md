@@ -25,7 +25,7 @@ See the pinned [submission requirements](https://github.com/SAIRcompetition/lean
 
 ## What a baseline means
 
-`--baseline example` selects the official public example bundled in `benchmarks/<problem>/official/Submission.lean`. These files are unchanged copies of upstream `examples/<problem>/Submission.lean`. `--baseline starter` selects the untouched participant starter downloaded from upstream `problems/<problem>/Submission.lean`. The example is the default.
+`--baseline example` selects the official public example bundled in `benchmarks/<number>-<problem>/official/Submission.lean`. These files are unchanged copies of upstream `examples/<problem>/Submission.lean`. `--baseline starter` selects the untouched participant starter downloaded from upstream `problems/<problem>/Submission.lean`. The example is the default.
 
 Both baselines come from the repository revision recorded in the benchmark's upstream pin. They are reference entries supplied by the challenge repository. They are not a claim about the best current solution, a leaderboard entry, or the exact submission running on the hosted service. Upstream states that examples and starters may exceed performance limits.
 

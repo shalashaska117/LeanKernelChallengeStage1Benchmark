@@ -40,15 +40,15 @@ class CliTests(unittest.TestCase):
         spec = importlib.util.spec_from_file_location("release_check", ROOT / "scripts/check_release.py")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        for path in ("Submission.lean", "benchmarks/fib/Submission.lean", "results/report.json",
+        for path in ("Submission.lean", "benchmarks/1-fib/Submission.lean", "results/report.json",
                      ".cache/upstream/README.md", "docs/private.txt", "tests/fixture.lean",
-                     "benchmarks/fib/official/Candidate.lean", "benchmarks/unknown/official/Submission.lean",
-                     "benchmarks/fib/selected/hardcoded/Submission.lean",
-                     "benchmarks/primecount/selected/no-table/Submission.lean",
-                     "benchmarks/primecount/selected/results.json", "candidates.lock.json"):
+                     "benchmarks/1-fib/official/Candidate.lean", "benchmarks/unknown/official/Submission.lean",
+                     "benchmarks/1-fib/selected/hardcoded/Submission.lean",
+                     "benchmarks/4-primecount/selected/no-table/Submission.lean",
+                     "benchmarks/4-primecount/selected/results.json", "candidates.lock.json"):
             self.assertFalse(module.allowed(path), path)
-        for path in ("README.md", "benchmarks/fib/cases.json", "lkc_bench/cli.py",
-                     "benchmarks/fib/official/Submission.lean", "third_party/lean-kernel-challenge/LICENSE"):
+        for path in ("README.md", "benchmarks/1-fib/cases.json", "lkc_bench/cli.py",
+                     "benchmarks/1-fib/official/Submission.lean", "third_party/lean-kernel-challenge/LICENSE"):
             self.assertTrue(module.allowed(path), path)
 
 
