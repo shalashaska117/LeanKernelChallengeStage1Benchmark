@@ -55,10 +55,26 @@ class CliTests(unittest.TestCase):
                     status = main(["diagnostic", "--problem", problem, "--output", str(output), *options])
                 self.assertEqual(status, 0)
                 self.assertEqual(run.call_args.args[0].memory_mb, memory)
+                self.assertEqual(run.call_args.args[0].preparation_memory_mb, memory)
                 self.assertEqual(run.call_args.args[0].inputs, inputs)
                 manifest = json.loads((output / "run.json").read_text())
                 self.assertEqual(manifest["options"]["memory_mb"], memory)
+                self.assertEqual(manifest["options"]["preparation_memory_mb"], memory)
                 self.assertEqual(manifest["options"]["inputs"], inputs)
+
+    def test_target_preparation_memory_override_preserves_source_and_replay_limit(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "run"
+            with patch("lkc_bench.cli.sys.platform", "linux"), patch("lkc_bench.cli.runtime_environment"), \
+                    patch("lkc_bench.cli.doctor", return_value={}), patch("sys.stdout", new_callable=io.StringIO), \
+                    patch("lkc_bench.diagnostic.run_diagnostic", return_value={"complete": True}) as run:
+                status = main(["diagnostic", "--problem", "sha256", "--preparation-memory-mb", "8192",
+                               "--output", str(output)])
+            self.assertEqual(status, 0)
+            self.assertEqual(run.call_args.args[0].memory_mb, 4096)
+            self.assertEqual(run.call_args.args[0].preparation_memory_mb, 8192)
+            options = json.loads((output / "run.json").read_text())["options"]
+            self.assertEqual((options["memory_mb"], options["preparation_memory_mb"]), (4096, 8192))
 
     def test_lock_has_full_revisions(self):
         for field in ("revision", "comparator_revision", "lean4export_revision"):

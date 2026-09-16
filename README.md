@@ -72,6 +72,8 @@ These descriptions refer to the naive specification. Each problem guide explains
 
 Matrix-permanent inputs pack a dimension and seed as `(dimension << 32) | seed`. Its default diagnostic uses all 15 cases from the pinned evaluator's unseeded local plan and an 8192 MiB memory watchdog. Rule 110 and SHA-256 pack `(steps << 32) | seed` and each use six local public cases: 2, 4 and 8 steps for Rule 110; 4, 32 and 512 for SHA-256. The other diagnostic problems use six documented endpoints. All except permanent default to a 4096 MiB watchdog. Override these defaults with `--inputs` and `--memory-mb`; see the [permanent](benchmarks/5-permanent/README.md#run-diagnostics), [Rule 110](benchmarks/6-ca-rule110/README.md#run-diagnostics), and [SHA-256](benchmarks/7-sha256/README.md#run-diagnostics) guides.
 
+`--preparation-memory-mb` changes only target compilation and export. It defaults to `--memory-mb`; source compilation, axiom audits and kernel replay keep the ordinary limit. SHA-256's 512-step targets can require more memory during preparation than during replay. The [SHA-256 guide](benchmarks/7-sha256/README.md#run-diagnostics) shows how to allow 8192 MiB for preparation while keeping replay at 4096 MiB. Reports record both limits.
+
 ```bash
 # Repeated kernel wall-time measurements on selected inputs.
 python3 benchmark.py diagnostic --problem partition \

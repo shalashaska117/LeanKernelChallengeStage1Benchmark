@@ -4,9 +4,12 @@ import hashlib
 import hmac
 import itertools
 import json
+import io
 from pathlib import Path
 import tempfile
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from lkc_bench import diagnostic
 from lkc_bench.workspace import BENCHMARK_DIRS, ROOT
@@ -251,6 +254,82 @@ class MeasurementTests(unittest.TestCase):
             with self.subTest(profile=invalid), self.assertRaises(ValueError):
                 path.write_text(invalid, encoding="utf-8")
                 diagnostic.parse_callgrind(path)
+
+
+class PreparationMemoryTests(unittest.TestCase):
+    def run_case(self, preparation_memory, failed_phase=None):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        package = root / "upstream/evaluation/problems/sha256"
+        package.mkdir(parents=True)
+        (package / "lean-toolchain").write_text("leanprover/lean4:v4.33.1\n")
+        source = root / "Submission.lean"
+        source.write_text("import Spec\n")
+        exporter, timer = root / "lean4export", root / "kernel"
+        exporter.write_text("exporter")
+        timer.write_text("timer")
+        calls = []
+
+        def step(command, *, log, root, memory_mb, stdout_path=None, **kwargs):
+            phase = log.name
+            calls.append((phase, memory_mb, command))
+            status = "memory-limit" if failed_phase and phase.startswith(failed_phase) else "complete"
+            log.write_text("mock tool process\n")
+            if stdout_path:
+                stdout_path.write_text("" if phase == "lean-path.log" else "mock export\n")
+            if "-o" in command and status == "complete":
+                Path(command[command.index("-o") + 1]).write_bytes(b"mock compiled source")
+            return {"status": status, "memory_limit_mb": memory_mb, "log": log.relative_to(root).as_posix()}
+
+        args = SimpleNamespace(problem="sha256", metric="wall-time", memory_mb=4096,
+                               preparation_memory_mb=preparation_memory, baseline="example", inputs=[0],
+                               repetitions=1, timeout=120, submission=source)
+        with patch.object(diagnostic.platform, "system", return_value="Linux"), \
+                patch.object(diagnostic, "official_baseline", return_value=source), \
+                patch.dict(diagnostic.os.environ, {"LEAN4EXPORT_BIN": str(root), "TIMER_BIN": str(timer)}), \
+                patch.object(diagnostic, "_step", side_effect=step), \
+                patch.object(diagnostic, "parse_timer", return_value={"wall_ns": 17}), \
+                patch("sys.stdout", new_callable=io.StringIO):
+            report = diagnostic.run_diagnostic(args, root / "upstream", root / "output")
+        return report, calls, (root / "output/diagnostic.md").read_text()
+
+    def test_override_changes_only_target_compile_and_export_for_both_sources(self):
+        report, calls, markdown = self.run_case(8192)
+        self.assertTrue(report["complete"])
+        for phase, memory_mb, command in calls:
+            preparation = phase.startswith(("target-compile-", "target-export-"))
+            self.assertEqual(memory_mb, 8192 if preparation else 4096, phase)
+            if "-M" in command:
+                self.assertEqual(int(command[command.index("-M") + 1]), memory_mb)
+        for run in report["runs"]:
+            self.assertEqual(run["compile"]["memory_limit_mb"], 4096)
+            case = run["cases"][0]
+            self.assertEqual(case["preparation"]["target-export"]["memory_limit_mb"], 8192)
+            self.assertEqual(case["preparation"]["axiom-audit"]["memory_limit_mb"], 4096)
+            self.assertEqual(case["samples"][0]["process"]["memory_limit_mb"], 4096)
+        self.assertEqual(report["limits"]["target_preparation_memory_mb"], 8192)
+        self.assertEqual(report["limits"]["source_compile_memory_mb"], 4096)
+        self.assertEqual(report["limits"]["replay_memory_mb"], 4096)
+        self.assertIn("4096 MiB for source compilation, axiom audits and replay", markdown)
+        self.assertIn("8192 MiB for target compilation and export", markdown)
+        self.assertIn("| --- | ---: | --- | --- | ---: | --- |\n| baseline", markdown)
+
+    def test_default_keeps_all_processes_at_original_limit(self):
+        report, calls, _ = self.run_case(None)
+        self.assertTrue(report["complete"])
+        self.assertTrue(all(memory == 4096 for _, memory, _ in calls))
+        self.assertEqual(report["limits"]["target_preparation_memory_mb"], 4096)
+
+    def test_larger_preparation_does_not_hide_compile_or_replay_memory_failure(self):
+        for phase in ("submission-compile", "replay-"):
+            with self.subTest(phase=phase):
+                report, calls, _ = self.run_case(8192, failed_phase=phase)
+                self.assertFalse(report["complete"])
+                self.assertIsNone(report["totals"]["baseline"])
+                self.assertIsNone(report["total_baseline_over_candidate"])
+                self.assertTrue(all(case["status"] == "memory-limit" for run in report["runs"] for case in run["cases"]))
+                self.assertTrue(all(memory == 4096 for name, memory, _ in calls if name.startswith(phase)))
 
 
 class SummaryTests(unittest.TestCase):

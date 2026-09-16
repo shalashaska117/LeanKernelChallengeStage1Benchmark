@@ -303,6 +303,7 @@ def _step(command: list[str], *, cwd: Path, env: dict[str, str], log: Path,
         "status": failure or ("complete" if process is not None and process.returncode == 0 else "failed"),
         "exit_code": process.returncode if process is not None else None,
         "elapsed_seconds": time.monotonic() - started,
+        "memory_limit_mb": memory_mb,
         "peak_sampled_process_tree_rss_kb": peak,
         "log": log.relative_to(root).as_posix(),
         "log_sha256": _sha(log),
@@ -390,6 +391,12 @@ def _write_markdown(output: Path, report: dict) -> None:
         f"| Role | {input_label} | Status | Raw samples | Median | Unit |",
         "| --- | ---: | --- | --- | ---: | --- |",
     ]
+    if "limits" in report:
+        limits = report["limits"]
+        lines[6:6] = [
+            f"Memory watchdog: {limits['memory_mb']} MiB for source compilation, axiom audits and replay; "
+            f"{limits.get('target_preparation_memory_mb', limits['memory_mb'])} MiB for target compilation and export.", "",
+        ]
     for run in report["runs"]:
         for case in run["cases"]:
             samples = ", ".join(str(sample["value"]) for sample in case["samples"] if sample.get("status") == "complete") or "n/a"
@@ -424,9 +431,12 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
         raise ValueError("Unsupported diagnostic problem or metric.")
     if args.memory_mb is None:
         args.memory_mb = DEFAULT_MEMORY_MB[args.problem]
+    if getattr(args, "preparation_memory_mb", None) is None:
+        args.preparation_memory_mb = args.memory_mb
     if args.baseline not in ("example", "starter"):
         raise ValueError("Baseline must be example or starter.")
-    if args.repetitions < 1 or not math.isfinite(args.timeout) or args.timeout <= 0 or args.memory_mb <= 0:
+    if (args.repetitions < 1 or not math.isfinite(args.timeout) or args.timeout <= 0
+            or args.memory_mb <= 0 or args.preparation_memory_mb <= 0):
         raise ValueError("Repetitions, timeout and memory must be positive.")
     inputs = list(DEFAULT_INPUTS[args.problem] if args.inputs is None else args.inputs)
     if len(set(inputs)) != len(inputs):
@@ -463,6 +473,8 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
         "boundary": REPLAY_BOUNDARY, "universal_correctness_checked": False,
         "allowed_axioms": AXIOMS.split(","), "baseline": args.baseline,
         "limits": {"timeout_seconds_per_process": args.timeout, "memory_mb": args.memory_mb,
+                   "source_compile_memory_mb": args.memory_mb, "replay_memory_mb": args.memory_mb,
+                   "target_preparation_memory_mb": args.preparation_memory_mb,
                    "memory_method": "process-tree RSS sampled every 100 ms; Lean -M during compilation",
                    "sandbox": False},
         "host": {"system": platform.system(), "release": platform.release(),
@@ -516,9 +528,12 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
         local_env = dict(env)
         local_env["LEAN_PATH"] = str(work) + (os.pathsep + lean_path if lean_path else "")
         lean = ["lean", "-j", "1", "-M", str(args.memory_mb), "-D", "Elab.async=false", "-R", str(work)]
-        def run(command, log, stdout_path=None):
+        target_lean = ["lean", "-j", "1", "-M", str(args.preparation_memory_mb),
+                       "-D", "Elab.async=false", "-R", str(work)]
+        def run(command, log, stdout_path=None, *, memory_mb=None):
             return _step(command, cwd=package, env=local_env, log=work / log, root=output,
-                         timeout=args.timeout, memory_mb=args.memory_mb, stdout_path=stdout_path)
+                         timeout=args.timeout, memory_mb=args.memory_mb if memory_mb is None else memory_mb,
+                         stdout_path=stdout_path)
         record["compile"] = run([*lean, "-o", str(work / "Submission.olean"), str(copied)], "submission-compile.log")
         if record["compile"]["status"] == "complete":
             record["olean_sha256"] = _sha(work / "Submission.olean")
@@ -539,13 +554,14 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
             case["generated_source"] = saved_source.relative_to(output).as_posix()
             case["generated_source_sha256"] = _sha(saved_source)
             phases = [
-                ("target-compile", [*lean, "-o", str(work / "Target.olean"), str(generated)], None),
-                ("target-export", [str(export_bin), "Target", "--", target], exported),
-                ("axiom-audit", [str(timer_bin), "--check-axioms", AXIOMS, str(exported)], None),
+                ("target-compile", [*target_lean, "-o", str(work / "Target.olean"), str(generated)], None,
+                 args.preparation_memory_mb),
+                ("target-export", [str(export_bin), "Target", "--", target], exported, args.preparation_memory_mb),
+                ("axiom-audit", [str(timer_bin), "--check-axioms", AXIOMS, str(exported)], None, args.memory_mb),
             ]
             case["preparation"] = {}
-            for phase, command, stdout_path in phases:
-                result = run(command, f"{phase}-{n}.log", stdout_path)
+            for phase, command, stdout_path, memory_mb in phases:
+                result = run(command, f"{phase}-{n}.log", stdout_path, memory_mb=memory_mb)
                 case["preparation"][phase] = result
                 if result["status"] != "complete":
                     case.update(status=result["status"], failure_phase=phase)

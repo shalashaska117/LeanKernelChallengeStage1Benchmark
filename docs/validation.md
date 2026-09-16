@@ -77,7 +77,7 @@ All four targets compiled, passed the export axiom audit, and completed one kern
 
 ## SHA-256 diagnostics
 
-The Python tests check the documented one-step example, zero-step initialization, seed extremes, and big-endian byte order. A seed-2 digest begins with a zero byte; a two-step fixture checks that the byte survives into the next hash input. Seed expansion is also checked against the closed form of the LCG. All 74 tests pass on WSL; native Windows passes 73 and skips the POSIX process-group test.
+The Python tests check the documented one-step example, zero-step initialization, seed extremes, and big-endian byte order. A seed-2 digest begins with a zero byte; a two-step fixture checks that the byte survives into the next hash input. Seed expansion is also checked against the closed form of the LCG.
 
 Expected outputs agree with the pinned official reference on 42 inputs: all six local public cases and steps 0, 1, 2, 4, 32 and 512 with seeds 0, 1, 2, 0x12345678, 0x80000000 and 0xffffffff. The six defaults match the pinned evaluator's empty-key sampler. The publication check passes for all 52 files and verifies the eight unchanged official Lean source hashes.
 
@@ -92,3 +92,17 @@ python3 benchmark.py diagnostic --problem sha256 \
 ```
 
 All four targets compiled, passed the export axiom audit, and completed one kernel replay each. The check covers zero steps with seeds 0 and 0xffffffff, and one step with seeds 1 and 2. Input `4294967297` returned the documented exact output. The JSON report retains outputs as decimal strings, decoded steps and seed, and the default 4096 MiB watchdog. Setup reused the pinned shared tools and built SHA-256's fixed `Spec` in the managed cache.
+
+A separate run of all six default SHA-256 inputs, with one wall-time replay per input and the default 4096 MiB watchdog, completed the four cases at 4 and 32 steps. Both 512-step cases exceeded the memory limit during target compilation. The report in `results/sha256-public-plan` records those preparation failures and leaves the full-plan total unavailable.
+
+The preparation-memory option is covered by tests that drive both baseline and candidate through the diagnostic runner. They check that only target compilation and export receive the larger cap, both Lean compilation commands use the correct `-M` value, and source or replay failures still leave totals unavailable. All 78 tests pass on WSL; native Windows passes 77 and skips the POSIX process-group test.
+
+The public CLI then completed all six inputs with a larger preparation allowance:
+
+```bash
+python3 benchmark.py diagnostic --problem sha256 --metric wall-time \
+  --repetitions 1 --timeout 120 --preparation-memory-mb 8192 \
+  --output results/sha256-public-plan-preparation8192
+```
+
+All six targets passed the export axiom audit and completed one kernel replay. Source compilation, axiom audits and replay retained the default 4096 MiB watchdog. Target compilation and export used 8192 MiB. For the two 512-step cases, sampled process-tree RSS peaked at about 4893 MiB during target compilation and 3390 MiB during replay. The JSON and Markdown reports record the separate limits. These are local wall-time diagnostics of the unchanged official example, not an official score.

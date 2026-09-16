@@ -51,6 +51,8 @@ def parser() -> argparse.ArgumentParser:
             command.add_argument("--repetitions", type=positive_int, default=3)
             command.add_argument("--memory-mb", type=positive_int,
                                  help="Process RSS watchdog and Lean allocation limit; default: 8192 for permanent, 4096 otherwise")
+            command.add_argument("--preparation-memory-mb", type=positive_int,
+                                 help="Override memory only for target compilation and export; defaults to --memory-mb")
     return result
 
 
@@ -87,6 +89,8 @@ def main(argv: list[str] | None = None) -> int:
                 args.inputs = config["diagnostic_inputs"]
             if args.memory_mb is None:
                 args.memory_mb = DEFAULT_MEMORY_MB[args.problem]
+            if args.preparation_memory_mb is None:
+                args.preparation_memory_mb = args.memory_mb
             if len(set(args.inputs)) != len(args.inputs):
                 arguments.error("--inputs must not contain duplicates")
         environment = doctor(args.problem, getattr(args, "metric", "wall-time"))

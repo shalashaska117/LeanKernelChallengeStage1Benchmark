@@ -91,6 +91,15 @@ python3 benchmark.py diagnostic --problem sha256 \
 
 Expected outputs use Python's `hashlib.sha256` on the complete 32-byte digest after LCG seed expansion. Leading zero bytes are preserved between steps. Reports include decoded steps and seed, exact natural-number outputs as decimal strings, raw replay samples, and failed cases. The default process-tree memory watchdog is 4096 MiB; override it with `--memory-mb`. See [the methodology](../../docs/methodology.md) for measurement limits. These selected-output checks do not establish the universal theorem or an official score.
 
+The 512-step targets can exceed 4096 MiB during Lean preparation before kernel replay starts. To allow 8192 MiB for target compilation and export while keeping source compilation, axiom audits and replay at 4096 MiB:
+
+```bash
+python3 benchmark.py diagnostic --problem sha256 --metric wall-time \
+  --memory-mb 4096 --preparation-memory-mb 8192
+```
+
+The default remains 4096 MiB for every phase. The larger preparation allowance is recorded separately in JSON and Markdown. It does not change the official evaluator, its memory policy, or the replay measurement window. A case that fails preparation remains unavailable and has no replay measurement.
+
 ## Pinned upstream references
 
 - [Problem statement](https://github.com/SAIRcompetition/lean-kernel-challenge/blob/eb5e8850cdec9acf52d615529f9d1d64894e44b9/rules/problems/sha256.md)

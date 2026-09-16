@@ -54,6 +54,8 @@ Reports retain the raw timer record for each successful sample, process metadata
 
 `--timeout` bounds each whole compile, export, audit, or replay process, including any preparation outside the measured window. `--memory-mb` supplies Lean's compilation memory setting and a process-tree RSS watchdog sampled every 100 ms; it defaults to 8192 MiB for `permanent` and 4096 MiB for other diagnostic problems. RSS polling can miss short spikes and count shared pages more than once. These controls do not reproduce the official cgroup memory policy or provide a sandbox. A timeout has no instruction count.
 
+`--preparation-memory-mb` overrides the limit for target compilation and export only. Source compilation, axiom audits, dependency preload during kernel replay, and the replay itself continue to use `--memory-mb`. Without this option, every phase uses the same memory limit as before. For example, `--memory-mb 4096 --preparation-memory-mb 8192` allows Lean's target preparation to use 8 GiB while retaining a 4 GiB replay watchdog. Preparation is outside the measured window. Reports record the two limits and each process's configured cap. This option applies only to `diagnostic`; it does not alter `compare` or the pinned evaluator's configuration.
+
 ## Public groups and hidden cases
 
 The problem manifests are readable descriptions of the pinned public group policies. The canonical evaluator resolves the actual full plan and validates it. Read its recorded plan to identify exact local inputs.
