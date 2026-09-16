@@ -42,8 +42,10 @@ class CliTests(unittest.TestCase):
             ("permanent", [], 8192, DEFAULT_INPUTS["permanent"]),
             ("partition", [], 4096, DEFAULT_INPUTS["partition"]),
             ("ca-rule110", [], 4096, DEFAULT_INPUTS["ca-rule110"]),
+            ("sha256", [], 4096, DEFAULT_INPUTS["sha256"]),
             ("permanent", ["--memory-mb", "3072", "--inputs", "17179869186"], 3072, [17179869186]),
             ("ca-rule110", ["--memory-mb", "2048", "--inputs", "4294967297"], 2048, [4294967297]),
+            ("sha256", ["--memory-mb", "2048", "--inputs", "4294967297"], 2048, [4294967297]),
         ):
             with self.subTest(problem=problem, options=options), tempfile.TemporaryDirectory() as temporary:
                 output = Path(temporary) / "run"

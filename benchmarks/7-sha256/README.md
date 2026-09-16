@@ -41,7 +41,16 @@ The site's description is qualitative. It is not a formal complexity bound or a 
 | H2 | 32 steps; distinct 32-bit seeds | 2 | 60 s |
 | H3 | 512 steps; distinct 32-bit seeds | 2 | 120 s |
 
-The official schedule selects distinct 32-bit seeds within each group. The canonical evaluator derives a deterministic schedule for local unseeded runs. Obtain the exact local packed inputs from the result's performance plan; group scales alone do not identify a case.
+The official schedule selects distinct 32-bit seeds within each group. The canonical evaluator derives a deterministic schedule for local unseeded runs. Diagnostic defaults use its six empty-key inputs, recorded in [cases.json](cases.json):
+
+| Group | Packed input | Steps | Seed |
+| --- | ---: | ---: | ---: |
+| H1 | 18860801433 | 4 | 1680932249 |
+| H1 | 17252521710 | 4 | 72652526 |
+| H2 | 138725260120 | 32 | 1286306648 |
+| H2 | 140599404248 | 32 | 3160450776 |
+| H3 | 2199121876686 | 512 | 98621134 |
+| H3 | 2199573357346 | 512 | 550101794 |
 
 The pinned whole-job memory policy is 4096 MiB and remains provisional in upstream documentation. The local comparison command does not enforce the official container memory limit. See [measurement and limits](../../docs/methodology.md).
 
@@ -64,7 +73,23 @@ The default baseline is the bundled [official public example](official/Submissio
 
 This command runs the full canonical local evaluation with one wall-time replay per case. Check both the correctness verdict and full-plan eligibility. An accepted submission can still have failed cases and no computation total.
 
-The optional diagnostic command currently supports `fib`, `partition`, `mertens`, and `primecount`. Use `compare` for this problem.
+## Run diagnostics
+
+After setup, measure the official example on all six local public inputs:
+
+```bash
+python3 benchmark.py diagnostic --problem sha256 --metric wall-time
+```
+
+Use `--submission /path/to/Submission.lean` to include your file. Select `--metric callgrind` for local instruction counts or `--metric pmu` on a host that permits hardware counting. A smaller check covers zero steps with seeds 0 and 0xffffffff, and one step with seeds 1 and 2:
+
+```bash
+python3 benchmark.py diagnostic --problem sha256 \
+  --inputs 0 4294967295 4294967297 4294967298 \
+  --metric wall-time --repetitions 1 --timeout 120
+```
+
+Expected outputs use Python's `hashlib.sha256` on the complete 32-byte digest after LCG seed expansion. Leading zero bytes are preserved between steps. Reports include decoded steps and seed, exact natural-number outputs as decimal strings, raw replay samples, and failed cases. The default process-tree memory watchdog is 4096 MiB; override it with `--memory-mb`. See [the methodology](../../docs/methodology.md) for measurement limits. These selected-output checks do not establish the universal theorem or an official score.
 
 ## Pinned upstream references
 

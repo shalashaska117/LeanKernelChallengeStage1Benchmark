@@ -51,7 +51,7 @@ class ExpectedOutputTests(unittest.TestCase):
         self.assertEqual(diagnostic.expected_values("mertens", list(expected)), expected)
 
     def test_invalid_inputs_fail(self):
-        for problem in ("fib", "permanent", "ca-rule110"):
+        for problem in ("fib", "permanent", "ca-rule110", "sha256"):
             for inputs in ([], [-1], [True], [1.5]):
                 with self.subTest(problem=problem, inputs=inputs), self.assertRaises(ValueError):
                     diagnostic.expected_values(problem, inputs)
@@ -94,7 +94,7 @@ class ExpectedOutputTests(unittest.TestCase):
         for problem, inputs in diagnostic.DEFAULT_INPUTS.items():
             manifest = json.loads((ROOT / "benchmarks" / BENCHMARK_DIRS[problem] / "cases.json").read_text())
             self.assertEqual(manifest["diagnostic_inputs"], inputs)
-        for problem in ("permanent", "ca-rule110"):
+        for problem in ("permanent", "ca-rule110", "sha256"):
             manifest = json.loads((ROOT / "benchmarks" / BENCHMARK_DIRS[problem] / "cases.json").read_text())
             sampled = []
             for group in manifest["groups"]:
@@ -143,6 +143,54 @@ class ExpectedOutputTests(unittest.TestCase):
     def test_rule110_target_preserves_full_nat_output(self):
         value = 62412942364118713680778432052760708221590981514164502482365323362230212198349
         source = diagnostic.target_source(4294967297, value, "Test.rule110", "Nat")
+        self.assertIn("Lean.mkNatLit 4294967297", source)
+        self.assertIn(f"let rhs := Lean.mkNatLit {value}", source)
+
+    def test_sha256_official_one_step_example(self):
+        value = 6974916886958575962243026017989799625410957637305596483321224775681667163855
+        self.assertEqual(diagnostic.expected_values("sha256", [4294967297]), {4294967297: value})
+
+    def test_sha256_zero_steps_and_seed_extremes(self):
+        for seed in (0, 1, 2, 0x12345678, 0x80000000, 0xffffffff):
+            # Closed form of the LCG checks its update order independently.
+            words = [(1664525 ** k * seed + 1013904223 * (1664525 ** k - 1) // 1664524) % 2 ** 32
+                     for k in range(1, 9)]
+            expected = sum(word << (32 * (7 - index)) for index, word in enumerate(words))
+            with self.subTest(seed=seed):
+                self.assertEqual(diagnostic.expected_values("sha256", [seed]), {seed: expected})
+                self.assertEqual(diagnostic.sha256_initial_bytes(seed), expected.to_bytes(32, "big"))
+
+    def test_sha256_initial_digest_byte_order(self):
+        expected = bytes.fromhex("3c88596c5e8885db8116017eb4733ac50cf06d605e98c13fc656dd928e625fc9")
+        self.assertEqual(diagnostic.sha256_initial_bytes(1), expected)
+        self.assertEqual(diagnostic.sha256_initial_bytes((1 << 32) | 1), expected)
+
+    def test_sha256_chain_preserves_leading_zero_bytes(self):
+        first = bytes.fromhex("00b3f8a7850d66a9df82ba0bc51201f619f6a508a44ce7c3c9d7a007e2931e07")
+        second = bytes.fromhex("34858626ac0af78543c65eee2c18e379ab61a76eeca30ad4caa62ace9335911b")
+        inputs = [(1 << 32) | 2, (2 << 32) | 2]
+        self.assertEqual(diagnostic.expected_values("sha256", inputs),
+                         dict(zip(inputs, (int.from_bytes(first, "big"), int.from_bytes(second, "big")))))
+        self.assertEqual(hashlib.sha256(first).digest(), second)
+        self.assertNotEqual(hashlib.sha256(first.lstrip(b"\x00")).digest(), second)
+
+    def test_sha256_public_plan_and_binary_chain(self):
+        inputs = diagnostic.DEFAULT_INPUTS["sha256"]
+        self.assertEqual([n >> 32 for n in inputs], [4, 4, 32, 32, 512, 512])
+        expected = {}
+        for n in inputs:
+            seed = n & 0xffffffff
+            words = [(1664525 ** k * seed + 1013904223 * (1664525 ** k - 1) // 1664524) % 2 ** 32
+                     for k in range(1, 9)]
+            digest = b"".join(word.to_bytes(4, "big") for word in words)
+            for _ in range(n >> 32):
+                digest = hashlib.sha256(digest).digest()
+            expected[n] = int.from_bytes(digest, "big")
+        self.assertEqual(diagnostic.expected_values("sha256", inputs), expected)
+
+    def test_sha256_target_preserves_full_nat_output(self):
+        value = 6974916886958575962243026017989799625410957637305596483321224775681667163855
+        source = diagnostic.target_source(4294967297, value, "Test.sha256", "Nat")
         self.assertIn("Lean.mkNatLit 4294967297", source)
         self.assertIn(f"let rhs := Lean.mkNatLit {value}", source)
 
@@ -208,6 +256,18 @@ class MeasurementTests(unittest.TestCase):
 class SummaryTests(unittest.TestCase):
     def test_rule110_markdown_shows_decoded_steps_and_seed(self):
         report = {"problem": "ca-rule110", "inputs": [4294967297], "metric": "wall-time", "unit": "ns",
+                  "repetitions": 1, "runs": [{"role": "baseline", "cases": [
+                      {"n": 4294967297, "steps": 1, "seed": 1, "status": "complete", "median": 7,
+                       "samples": [{"status": "complete", "value": 7}]}]}]}
+        diagnostic._summarize(report)
+        with tempfile.TemporaryDirectory() as temporary:
+            diagnostic._write_markdown(Path(temporary), report)
+            text = (Path(temporary) / "diagnostic.md").read_text()
+        self.assertIn("Packed input (steps, seed)", text)
+        self.assertIn("4294967297 (1, 1)", text)
+
+    def test_sha256_markdown_shows_decoded_steps_and_seed(self):
+        report = {"problem": "sha256", "inputs": [4294967297], "metric": "wall-time", "unit": "ns",
                   "repetitions": 1, "runs": [{"role": "baseline", "cases": [
                       {"n": 4294967297, "steps": 1, "seed": 1, "status": "complete", "median": 7,
                        "samples": [{"status": "complete", "value": 7}]}]}]}

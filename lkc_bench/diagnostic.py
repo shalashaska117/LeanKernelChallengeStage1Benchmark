@@ -40,8 +40,10 @@ DEFAULT_INPUTS = {
         71077100717, 72835838140, 72703668916, 70268834944, 69508517010,
     ],
     "ca-rule110": [12551916119, 10588838281, 18550129185, 18418222002, 34820276714, 38244662432],
+    "sha256": [18860801433, 17252521710, 138725260120, 140599404248, 2199121876686, 2199573357346],
 }
 DEFAULT_MEMORY_MB = {problem: 8192 if problem == "permanent" else 4096 for problem in DEFAULT_INPUTS}
+PACKED_SCALE = {"permanent": "dimension", "ca-rule110": "steps", "sha256": "steps"}
 TARGET_ENCODING = "direct-rfl-v1-experimental"
 MEASUREMENT_CONTRACT = "kernel-replay-v2"
 REPLAY_BOUNDARY = "target-declaration-replay-v1"
@@ -120,6 +122,23 @@ def rule110_value(n: int) -> int:
     return sum(int(cell) << i for i, cell in enumerate(row))
 
 
+def sha256_initial_bytes(seed: int) -> bytes:
+    """Expand the seed into eight successive LCG words, encoded most significant byte first."""
+    state, digest = seed & 0xffffffff, bytearray()
+    for _ in range(8):
+        state = (1664525 * state + 1013904223) & 0xffffffff
+        digest.extend(state.to_bytes(4, "big"))
+    return bytes(digest)
+
+
+def sha256_value(n: int) -> int:
+    """Hash the complete 32-byte digest once per decoded chain step."""
+    digest = sha256_initial_bytes(n & 0xffffffff)
+    for _ in range(n >> 32):
+        digest = hashlib.sha256(digest).digest()
+    return int.from_bytes(digest, "big")
+
+
 def expected_values(problem: str, inputs: list[int]) -> dict[int, int]:
     """Compute integer test answers without invoking the submitted Lean code."""
     if not inputs or any(isinstance(n, bool) or not isinstance(n, int) or n < 0 for n in inputs):
@@ -128,6 +147,8 @@ def expected_values(problem: str, inputs: list[int]) -> dict[int, int]:
         return {n: permanent_value(n) for n in inputs}
     if problem == "ca-rule110":
         return {n: rule110_value(n) for n in inputs}
+    if problem == "sha256":
+        return {n: sha256_value(n) for n in inputs}
     if problem == "fib":
         answers = {}
         for n in inputs:
@@ -358,7 +379,7 @@ def _summarize(report: dict) -> None:
 
 
 def _write_markdown(output: Path, report: dict) -> None:
-    scale = {"permanent": "dimension", "ca-rule110": "steps"}.get(report["problem"])
+    scale = PACKED_SCALE.get(report["problem"])
     input_label = f"Packed input ({scale}, seed)" if scale else "Input"
     lines = [
         f"# {report['problem']} local diagnostic", "",
@@ -461,6 +482,9 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
     elif args.problem == "ca-rule110":
         report["input_encoding"] = "packed-v1: (steps << 32) | seed"
         report["expected_output_method"] = "Independent Python simulation of 256 Boolean cells with a truth table"
+    elif args.problem == "sha256":
+        report["input_encoding"] = "packed-v1: (steps << 32) | seed"
+        report["expected_output_method"] = "Python LCG seed expansion followed by hashlib.sha256 on 32-byte digests"
     for tool in ("lean", "lake", *(["valgrind"] if args.metric == "callgrind" else [])):
         step = _step([tool, "--version"], cwd=package, env=env, log=output / f"{tool}-version.log",
                      root=output, timeout=args.timeout, memory_mb=args.memory_mb)
@@ -484,7 +508,7 @@ def run_diagnostic(args, upstream: Path, output: Path) -> dict:
                   "source_artifact": copied.relative_to(output).as_posix(),
                   "cases": [{"n": n, "expected": str(values[n]), "target": targets[n],
                              "status": "pending", "samples": [], "median": None} for n in inputs]}
-        scale = {"permanent": "dimension", "ca-rule110": "steps"}.get(args.problem)
+        scale = PACKED_SCALE.get(args.problem)
         if scale:
             for case in record["cases"]:
                 case.update({scale: case["n"] >> 32, "seed": case["n"] & 0xffffffff})

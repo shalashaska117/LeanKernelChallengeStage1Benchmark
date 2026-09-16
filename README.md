@@ -44,7 +44,7 @@ The numbered folders follow the order below. Use the ID column with `--problem`.
 | [Prime counting](benchmarks/4-primecount/README.md) | `primecount` | [Submission.lean](benchmarks/4-primecount/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
 | [Matrix permanent](benchmarks/5-permanent/README.md) | `permanent` | [Submission.lean](benchmarks/5-permanent/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
 | [Rule 110](benchmarks/6-ca-rule110/README.md) | `ca-rule110` | [Submission.lean](benchmarks/6-ca-rule110/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
-| [SHA-256](benchmarks/7-sha256/README.md) | `sha256` | [Submission.lean](benchmarks/7-sha256/official/Submission.lean) | Available | Planned |
+| [SHA-256](benchmarks/7-sha256/README.md) | `sha256` | [Submission.lean](benchmarks/7-sha256/official/Submission.lean) | Available | Wall time, Callgrind, PMU |
 | [Polynomial discriminant](benchmarks/8-polydisc/README.md) | `polydisc` | [Submission.lean](benchmarks/8-polydisc/official/Submission.lean) | Available | Planned |
 
 `python3 benchmark.py list` lists the supported modes. Guides and `cases.json` files are separate for each problem. The pinned upstream evaluator determines the full comparison plan; diagnostic inputs are an explicit local selection.
@@ -68,9 +68,9 @@ These descriptions refer to the naive specification. Each problem guide explains
 
 `compare` calls the upstream local evaluator separately for the baseline and your file. It checks the interface, universal proof, and axioms, then attempts the complete unseeded public plan with one wall-time measurement per case. Read the completion result as well as acceptance: an accepted submission can have failed or unattempted cases. Full runs can take a long time, and a baseline can exceed the limits.
 
-`diagnostic` prepares exact-output targets for selected Fibonacci, partition, Mertens, prime-counting, matrix-permanent, or Rule 110 inputs and measures kernel target replay. It keeps individual samples, export hashes, step logs, and per-case failures. It checks the selected output equalities and exported axioms; it does not verify the universal correctness theorem.
+`diagnostic` prepares exact-output targets for selected Fibonacci, partition, Mertens, prime-counting, matrix-permanent, Rule 110, or SHA-256 inputs and measures kernel target replay. It keeps individual samples, export hashes, step logs, and per-case failures. It checks the selected output equalities and exported axioms; it does not verify the universal correctness theorem.
 
-Matrix-permanent inputs pack a dimension and seed as `(dimension << 32) | seed`. Its default diagnostic uses all 15 cases from the pinned evaluator's unseeded local plan and an 8192 MiB memory watchdog. Rule 110 packs `(steps << 32) | seed` and uses six local public cases at 2, 4 and 8 steps. The other diagnostic problems use six documented endpoints. All except permanent default to a 4096 MiB watchdog. Override these defaults with `--inputs` and `--memory-mb`; see the [permanent](benchmarks/5-permanent/README.md#run-diagnostics) and [Rule 110](benchmarks/6-ca-rule110/README.md#run-diagnostics) guides.
+Matrix-permanent inputs pack a dimension and seed as `(dimension << 32) | seed`. Its default diagnostic uses all 15 cases from the pinned evaluator's unseeded local plan and an 8192 MiB memory watchdog. Rule 110 and SHA-256 pack `(steps << 32) | seed` and each use six local public cases: 2, 4 and 8 steps for Rule 110; 4, 32 and 512 for SHA-256. The other diagnostic problems use six documented endpoints. All except permanent default to a 4096 MiB watchdog. Override these defaults with `--inputs` and `--memory-mb`; see the [permanent](benchmarks/5-permanent/README.md#run-diagnostics), [Rule 110](benchmarks/6-ca-rule110/README.md#run-diagnostics), and [SHA-256](benchmarks/7-sha256/README.md#run-diagnostics) guides.
 
 ```bash
 # Repeated kernel wall-time measurements on selected inputs.

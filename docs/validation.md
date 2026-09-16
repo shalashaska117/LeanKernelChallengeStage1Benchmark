@@ -74,3 +74,21 @@ python3 benchmark.py diagnostic --problem ca-rule110 \
 ```
 
 All four targets compiled, passed the export axiom audit, and completed one kernel replay each. Input `4294967297` returned the documented exact 256-bit output. The JSON report records steps and seed for every input, the expected natural-number output, and the default 4096 MiB watchdog. Setup reused the pinned shared tools and built Rule 110's fixed `Spec` in the managed cache.
+
+## SHA-256 diagnostics
+
+The Python tests check the documented one-step example, zero-step initialization, seed extremes, and big-endian byte order. A seed-2 digest begins with a zero byte; a two-step fixture checks that the byte survives into the next hash input. Seed expansion is also checked against the closed form of the LCG. All 74 tests pass on WSL; native Windows passes 73 and skips the POSIX process-group test.
+
+Expected outputs agree with the pinned official reference on 42 inputs: all six local public cases and steps 0, 1, 2, 4, 32 and 512 with seeds 0, 1, 2, 0x12345678, 0x80000000 and 0xffffffff. The six defaults match the pinned evaluator's empty-key sampler. The publication check passes for all 52 files and verifies the eight unchanged official Lean source hashes.
+
+The public CLI completed this wall-time smoke check against the bundled official example:
+
+```bash
+python3 benchmark.py setup --problem sha256
+python3 benchmark.py diagnostic --problem sha256 \
+  --inputs 0 4294967295 4294967297 4294967298 \
+  --metric wall-time --repetitions 1 --timeout 120 \
+  --output results/sha256-public-smoke
+```
+
+All four targets compiled, passed the export axiom audit, and completed one kernel replay each. The check covers zero steps with seeds 0 and 0xffffffff, and one step with seeds 1 and 2. Input `4294967297` returned the documented exact output. The JSON report retains outputs as decimal strings, decoded steps and seed, and the default 4096 MiB watchdog. Setup reused the pinned shared tools and built SHA-256's fixed `Spec` in the managed cache.

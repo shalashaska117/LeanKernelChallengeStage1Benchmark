@@ -9,7 +9,7 @@
   "canonical_config": "evaluation/problems/sha256/config.json",
   "input_encoding": "packed-v1: (steps << 32) | seed",
   "memory_mb": 4096,
-  "diagnostic_inputs": null,
+  "diagnostic_inputs": [18860801433, 17252521710, 138725260120, 140599404248, 2199121876686, 2199573357346],
   "groups": [
     {
       "id": "H1",
