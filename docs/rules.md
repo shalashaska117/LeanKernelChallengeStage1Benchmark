@@ -1,6 +1,18 @@
 # Submission and comparison rules
 
-This repository provides community benchmarks for the pinned Stage 1 challenge. The [upstream rules](https://github.com/SAIRcompetition/lean-kernel-challenge/blob/eb5e8850cdec9acf52d615529f9d1d64894e44b9/rules/overview.md#rules) define competition eligibility. These notes explain the requirements that affect local comparisons; they do not submit a file to the competition.
+This repository provides community benchmarks for Stage 1. The executable environment remains pinned in [upstream.lock.json](../upstream.lock.json). Competition eligibility follows the [current official rules](https://github.com/SAIRcompetition/lean-kernel-challenge/blob/main/rules/overview.md#rules), including the answer-precomputation restrictions checked on September 17, 2026. These notes do not submit a file to the competition.
+
+## Computation and precomputed answers
+
+The competition seeks improvements to algorithms and representations for verified kernel computation. Current R2 prohibits precomputed answer tables and hardcoded answers for particular inputs, including answers encoded in conditional branches. A universal correctness proof does not exempt such a submission.
+
+Fixed algorithm constants, local transition rules and recurrence base cases are permitted. Dynamic programming and memoization tables are permitted when generated during the measured kernel computation. The distinction is what the stored values do and when they are computed; the presence of a table or numeric literal alone does not decide eligibility.
+
+For example, a partition DP table built from the requested input fits the stated runtime-table allowance. A table of precomputed partition answers selected by that input does not. Constants prescribed by SHA-256 are algorithm constants. Unusual partial evaluation or precomputed intermediate data needs a separate review against the competition's purpose; benchmark success cannot settle that question.
+
+Do not manipulate the evaluator or move candidate computation outside its measured boundary to obtain a score. Diagnostic expected outputs are independent test oracles in the harness; they are not data to embed in a competition submission.
+
+The pinned evaluator predates this rule update. Its `accepted` and `eligible` fields describe its automated checks and replay outcomes. They do not certify compliance with current competition policy. Preserve the pin for reproducible measurements and review the candidate against current rules separately.
 
 ## Required submission
 

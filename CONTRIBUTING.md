@@ -2,6 +2,10 @@
 
 Changes should help another participant run and understand a benchmark. Keep each problem's guide and `cases.json` beside its benchmark configuration. Describe the input policy, expected result checks, limits, measurement boundary, and differences from official scoring.
 
+Follow the [current computation policy](docs/rules.md#computation-and-precomputed-answers). Do not recommend answer precomputation or evaluation manipulation as optimizations. Keep independent expected answers in the test harness separate from candidate computation. Document algorithm constants and tables generated during measured computation accurately; they are not categorically prohibited. An automated acceptance result is not an organizer eligibility ruling.
+
+When competition policy changes ahead of the pinned evaluator, update the policy notes with a dated official source. Keep the executable pin and measurement provenance explicit. A documentation update alone does not require changing the evaluator or baseline hashes.
+
 The eight official public examples are bundled unchanged in `benchmarks/<number>-<problem>/official/Submission.lean`. Keep changes focused on benchmark tools, guides, and these pinned examples. New baseline references need a public source, a pinned revision and SHA-256 hash, and the upstream license. Keep the upstream and bundled paths in `baselines.lock.json` consistent with the source files.
 
 Before proposing a change:

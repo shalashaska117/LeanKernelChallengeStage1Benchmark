@@ -1,5 +1,13 @@
 # Validation
 
+## September 17 computation-policy update
+
+The rules guide now separates current restrictions on precomputed answers from the pinned evaluator's automated verdicts. The README, contribution guidance, report interpretation and source notice use the same distinction. The executable pin, bundled Lean examples and benchmark behavior are unchanged.
+
+Validation on native Windows: 90 Python tests passed and the POSIX process-group test was skipped (91 tests discovered). `python benchmark.py list` lists all eight problems. The worktree release check passes for 54 files and verifies all eight official baseline hashes. This documentation change did not rerun Lean compilation or kernel benchmarks.
+
+## Initial release
+
 The initial release was checked on 2026-09-16 using the revision in `upstream.lock.json`.
 
 The Python suite covers independent expected answers, measurement parsing, incomplete runs, comparison eligibility, local report privacy, interrupted setup recovery, source and baseline pins, and PMU error handling. Linux tests also exercise cleanup of a worker's nested tool process group after interruption.

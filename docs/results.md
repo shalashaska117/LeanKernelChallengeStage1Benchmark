@@ -16,6 +16,8 @@ Read `summary.md` first, then `summary.json` for structured data. Raw baseline a
 
 The evaluator has separate outcomes for submission acceptance, correctness replay, and each computation case. Acceptance checks the submission interface and proof. A complete computation total requires all planned cases and the required verification to finish successfully. A failure, timeout, or unattempted case leaves its measurement absent.
 
+The pinned evaluator's `accepted` and `eligible` fields do not certify compliance with the current ban on precomputed answers or with the competition's purpose. Review the source against the [current computation policy](rules.md#computation-and-precomputed-answers) separately. The website's `SUBMITTED` label confirms submission, not approval. An abbreviated upload hash only permits a prefix comparison; retain full hashes when verifying file identity.
+
 The wrapper compares complete runs only when their problem, case identities, metric, and evaluation cohort agree. It never adds missing values as zero. Correctness replay is reported separately and is not included in the computation total.
 
 ## Detailed diagnostics

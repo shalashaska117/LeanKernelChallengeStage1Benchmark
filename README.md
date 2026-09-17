@@ -107,7 +107,9 @@ Exit code `0` means the requested benchmark completed, `1` means incomplete meas
 
 ## Rules and contributions
 
-Read the [general rules](docs/rules.md) and your problem's guide before interpreting results. The organizers' current rules govern competition submissions; this repository documents the revision in [upstream.lock.json](upstream.lock.json).
+Read the [general rules](docs/rules.md) and your problem's guide before interpreting results. Current rules prohibit precomputed answer tables and input-specific hardcoded answers, including conditional branches. Algorithm constants, recurrence base cases and tables generated during measured kernel computation are permitted. See the [September 17 policy update](docs/rules.md#computation-and-precomputed-answers).
+
+The executable environment remains at the revision in [upstream.lock.json](upstream.lock.json). Passing its automated checks does not establish compliance with current competition policy.
 
 Benchmark additions should include their input policy, measurement limits, and tests. See [contribution guidance](CONTRIBUTING.md). The benchmark tools are under the [MIT license](LICENSE). The bundled official Lean files are under [Apache-2.0](third_party/lean-kernel-challenge/LICENSE); see [third-party sources](NOTICE.md) for their provenance.
 
